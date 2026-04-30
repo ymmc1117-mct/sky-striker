@@ -112,9 +112,10 @@
     left: max(14px, env(safe-area-inset-left, 14px));
     width: 42px; height: 42px;
   }
+  /* Mute sits to the LEFT of pause in the top-right corner */
   #btn-mute {
-    top: max(64px, calc(env(safe-area-inset-top, 14px) + 50px));
-    left: max(14px, env(safe-area-inset-left, 14px));
+    top: max(14px, env(safe-area-inset-top, 14px));
+    right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
     width: 42px; height: 42px;
   }
   /* Force consistent flat SVG icons - no emoji rendering on any platform */
@@ -455,19 +456,19 @@
   const SPR_PLAYER = makeSprite([
     '       GG       ','       GG       ','      GCCG      ','      GCCG      ',
     '     DCBBCD     ','   GGDCBBCDGG   ','  GCCDBAABDCCG  ',' GCBBDBAABDBBCG ',
-    'GCBBBBBAABBBBBCG','GBBBAAABBAAABBBG',' GAAA  AA  AAAG ','  HH   AA   HH  ',
+    'GCBBBBBAABBBBBCG','GBBBAAABBAAABBBG','GGAAA  AA  AAAGG',' G HH  AA  HH G ',
     '       FF       ','      EFFE      ','       FF       ','       EE       ',
   ]);
   const SPR_PLAYER_L = makeSprite([
     '       GG       ','      GCG       ','     GCCCG      ','    DCCBCG      ',
     '    DCBBCD      ','  GGDCBBCDGG    ',' GCCDBAABDCCG   ','GCBBDBAABDBBCG  ',
-    'GCBBBBAABBBBBCG ',' GBBAAABBAABBG  ','  GAAA  AAAG    ','   HH   AA  HH  ',
+    'GCBBBBAABBBBBCG ','GBBBAAABBAAABBBG','GAAA  AA  AAAGG ','G HH   AA  HH G ',
     '       FF       ','      EFFE      ','       FF       ','       EE       ',
   ]);
   const SPR_PLAYER_R = makeSprite([
     '       GG       ','       GCG      ','      GCCCG     ','      GCBCCD    ',
     '      DCBBCD    ','    GGDCBBCDGG  ','   GCCDBAABDCCG ','  GCBBDBAABDBBCG',
-    ' GCBBBBAABBBBBCG','  GBBAABBAAABBG ','    GAAA  AAAG  ','  HH   AA   HH  ',
+    ' GCBBBBAABBBBBCG','GBBBAAABBAAABBBG',' GAAA  AA  AAAGG',' G HH  AA   HH G',
     '       FF       ','      EFFE      ','       FF       ','       EE       ',
   ]);
 
@@ -680,7 +681,7 @@
   // ---------- HIGH SCORES (localStorage, top 10) ----------
   const HS_KEY = 'sky-striker-scores-v1';
   const HS_MAX = 10;
-  const NAME_LEN = 6;
+  const NAME_LEN = 12;
   const NAME_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-! ';
   // On-screen keyboard grid: 8 cols x 5 rows = 40 cells (last row has DEL/OK)
   const KB_COLS = 8;
@@ -694,7 +695,7 @@
   // Layout (canvas pixel coords; computed once)
   const NE = {
     nameRowY: 60,
-    charW: 14,
+    charW: 12,
     nameBaseX: 0,        // computed below
     kbX: 16,             // left edge of keyboard
     kbY: 96,
@@ -783,15 +784,16 @@
   let stars=[], clouds=[];
   let waveTimer=0, waveCount=0, stage=1, stageWaves=0;
   const WAVES_PER_STAGE = 5;
-  let bossActive=false, bossWarning=0;
+  let bossWarning=0;
   let bossLock=false;        // prevents wave spawning during warning / spawn / transition
   let loopCount=0;           // 0=first run, 1=2nd loop, 2=3rd loop...
   let bossesKilledThisStage=0; // tracks multi-boss stages in endless loops
+  let bossesNeededThisStage=1; // total bosses spawned this stage
   let bombFlash=0, shake=0, highScore=0;
 
   // Name entry & scores screen state
   const nameEntry = {
-    name: [' ',' ',' ',' ',' ',' '],
+    name: Array(NAME_LEN).fill(' '),
     pos: 0,
     kb: 0,            // index into KB_CHARS for keyboard nav
     rank: -1,
@@ -818,7 +820,7 @@
     player.score=0; player.invuln=0; player.dead=false; player.deathTimer=0;
     bullets=[]; enemies=[]; ebullets=[]; particles=[]; powerups=[]; scoreFloaters=[];
     waveTimer=60; waveCount=0; stage=1; stageWaves=0;
-    bossActive=false; bossWarning=0; bossLock=false;
+    bossWarning=0; bossLock=false;
     loopCount=0; bossesKilledThisStage=0;
     combo=0; comboTimer=0;
     cleared = false;
@@ -882,28 +884,84 @@
              shootCD: 60 + Math.random()*60, flash:0, isBoss:false };
   }
 
+  // Returns how many boss enemies are currently alive
+  function bossCount() {
+    let n = 0;
+    for (const e of enemies) if (e.isBoss && !e.dead) n++;
+    return n;
+  }
+
+  // Build a single boss enemy. role 0=center, 1=left, 2=right, 3=far-left, 4=far-right
+  function makeBossEnemy(bossDef, role, totalBosses, hpMul = 1, scoreMul = 1) {
+    // Compute spawn x offsets so bosses are spaced across the screen
+    let xOffset = 0;
+    if (totalBosses === 1) xOffset = 0;
+    else if (totalBosses === 2) xOffset = (role === 0 ? -50 : 50);
+    else if (totalBosses === 3) xOffset = (role === 0 ? 0 : role === 1 ? -70 : 70);
+    else xOffset = (role - (totalBosses - 1) / 2) * 50;
+
+    // Stagger Y entry so they don't all overlap (only for 3+ bosses)
+    const yEntry = totalBosses >= 3 ? -32 - role * 18 : -32;
+    const targetY = totalBosses >= 3 ? 36 + role * 8 : 40;
+
+    const baseHp = 60 + stage * 15 + loopCount * 20;
+    const hp = Math.floor(baseHp * hpMul);
+    const baseScore = 5000 + stage * 2000 + loopCount * 1000;
+    const score = Math.floor(baseScore * scoreMul);
+
+    return {
+      type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
+      x: W/2 + xOffset, y: yEntry, vx: 0, vy: 0.4,
+      w: 30, h: 28, hp, maxHp: hp, score,
+      t: role * 30,        // phase offset so movements desync
+      motion: 'boss', isBoss: true, phase: 0, shootCD: 90 + role * 20, flash: 0,
+      targetY, xCenter: W/2 + xOffset,  // stored center for sway pattern
+    };
+  }
+
+  // For loop3 (final), the three bosses are picked from BOSS_TYPES indices [4, 2, 3]
+  // = LORD (centerpiece) flanked by ONI and EYE
+  const FINAL_LOOP_BOSSES = [4, 2, 3]; // LORD, ONI, EYE -> roles 0,1,2
+
   function spawnBoss() {
-    if (bossLock || bossActive) return;   // prevent double-spawn
+    if (bossLock || bossCount() > 0) return;
     bossLock = true;
     bossesKilledThisStage = 0;
-    stageWaves = 0;                       // FIX: reset immediately so the
-                                          // wave-spawn loop doesn't fire again
-                                          // before the boss appears or in the
-                                          // 1.5s gap after a boss dies.
+    stageWaves = 0;
     bossWarning = 120;
     sfx.warn();
+
     setTimeout(() => {
       if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
-      const bossIdx = (stage - 1) % BOSS_TYPES.length;
-      const bossDef = BOSS_TYPES[bossIdx];
-      const hp = 60 + stage * 15 + loopCount * 20;
-      enemies.push({
-        type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
-        x:W/2, y:-32, vx:0, vy:0.4,
-        w:30, h:28, hp, maxHp:hp, score:5000 + stage*2000 + loopCount*1000,
-        t:0, motion:'boss', isBoss:true, phase:0, shootCD:90, flash:0, targetY:40,
+
+      let bossList; // array of {def, hpMul, scoreMul}
+      if (loopCount >= 2) {
+        // FINAL STAGE: 3 different fearsome bosses simultaneously
+        bossList = FINAL_LOOP_BOSSES.map((idx, i) => ({
+          def: BOSS_TYPES[idx],
+          hpMul: 1.5 + i * 0.25,   // each progressively tougher
+          scoreMul: 1.5,
+        }));
+      } else {
+        // Loop 1: 1 boss. Loop 2: 2 bosses (same stage type, simultaneous)
+        const count = loopCount + 1;
+        const bossIdx = (stage - 1) % BOSS_TYPES.length;
+        const bossDef = BOSS_TYPES[bossIdx];
+        bossList = [];
+        for (let i = 0; i < count; i++) {
+          bossList.push({
+            def: bossDef,
+            hpMul: i === 0 ? 1.0 : 1.0 + i * 0.15,
+            scoreMul: i === 0 ? 1.0 : 0.7,
+          });
+        }
+      }
+
+      const N = bossList.length;
+      bossesNeededThisStage = N;
+      bossList.forEach((b, i) => {
+        enemies.push(makeBossEnemy(b.def, i, N, b.hpMul, b.scoreMul));
       });
-      bossActive = true;
       bossLock = false;
       setBossBGM(true);
     }, 2000);
@@ -1116,12 +1174,18 @@
       // ----- BOMB -----
       if ((pressed.KeyX || wantBomb) && player.bombs > 0) {
         player.bombs--; bombFlash = 30; shake = 8; sfx.bomb();
+        const toKill = [];
         for (const e of enemies) {
-          if (e.isBoss) { e.hp -= 8; e.flash = 8; continue; }
+          if (e.isBoss) {
+            e.hp -= 8; e.flash = 8;
+            if (e.hp <= 0) toKill.push(e);
+            continue;
+          }
           for (let i=0; i<8; i++) particles.push(makePart(e.x, e.y, '#ffd84a'));
           player.score += e.score;
           e.dead = true;
         }
+        for (const b of toKill) killBoss(b);
         enemies = enemies.filter(e => !e.dead);
         ebullets = [];
         updateBombUI();
@@ -1148,7 +1212,7 @@
             nameEntry.rank = r;
             nameEntry.score = player.score;
             nameEntry.stage = stage;
-            nameEntry.name = [' ',' ',' ',' ',' ',' '];
+            nameEntry.name = Array(NAME_LEN).fill(' ');
             nameEntry.pos = 0;
             nameEntry.kb = 0;
             nameEntry.blink = 0;
@@ -1165,7 +1229,7 @@
     for (const b of ebullets) { b.x += b.vx; b.y += b.vy; }
     ebullets = ebullets.filter(b => b.y < H+10 && b.y > -10 && b.x > -10 && b.x < W+10);
 
-    if (!bossActive && !bossLock && bossWarning <= 0) {
+    if (bossCount() === 0 && !bossLock && bossWarning <= 0) {
       waveTimer--;
       const enemyCap = 8 + Math.min(12, (stage - 1) * 2 + loopCount * 3);
       if (waveTimer <= 0 && enemies.length < enemyCap) {
@@ -1209,6 +1273,7 @@
 
     for (const b of bullets) {
       for (const e of enemies) {
+        if (e.dead) continue;            // FIX: skip already-dead enemies
         if (Math.abs(b.x - e.x) < e.w/2 + 1 && Math.abs(b.y - e.y) < e.h/2 + 1) {
           e.hp -= b.dmg; e.flash = 4;
           b.dead = true;
@@ -1277,29 +1342,33 @@
   function updateBoss(e) {
     if (e.y < e.targetY) { e.y += e.vy; return; }
 
-    // Movement varies by boss
+    // Center the sway around the boss's own spawn center, not W/2.
+    // Reduce sway amplitude when there are multiple bosses to avoid collisions.
+    const numBosses = bossCount();
+    const swayMul = numBosses > 1 ? 0.4 : 1.0;
+    const cx = e.xCenter ?? W/2;
+
     if (e.bossType === 'UFO') {
-      // UFO drifts in a wide arc and bobs
-      e.x = W/2 + Math.sin(e.t * 0.02) * 80;
+      e.x = cx + Math.sin(e.t * 0.02) * 80 * swayMul;
       e.y = e.targetY + Math.sin(e.t * 0.04) * 6;
     } else if (e.bossType === 'ONI') {
-      // pulse + slower sway
-      e.x = W/2 + Math.sin(e.t * 0.012) * 50;
+      e.x = cx + Math.sin(e.t * 0.012) * 50 * swayMul;
       e.y = e.targetY + Math.sin(e.t * 0.06) * 4;
     } else if (e.bossType === 'EYE') {
-      // hovers steady, slight sway
-      e.x = W/2 + Math.sin(e.t * 0.025) * 70;
+      e.x = cx + Math.sin(e.t * 0.025) * 70 * swayMul;
     } else if (e.bossType === 'LORD') {
-      // slow menacing drift
-      e.x = W/2 + Math.sin(e.t * 0.008) * 90;
+      e.x = cx + Math.sin(e.t * 0.008) * 90 * swayMul;
     } else if (e.bossType === 'SQUID') {
-      // squid: undulating jet propulsion, drifts side to side
-      e.x = W/2 + Math.sin(e.t * 0.018) * 70;
+      e.x = cx + Math.sin(e.t * 0.018) * 70 * swayMul;
       e.y = e.targetY + Math.sin(e.t * 0.08) * 5;
     } else {
-      // generic
-      e.x = W/2 + Math.sin(e.t * 0.015) * 60;
+      e.x = cx + Math.sin(e.t * 0.015) * 60 * swayMul;
     }
+
+    // Keep within screen
+    const margin = 18;
+    if (e.x < margin) e.x = margin;
+    if (e.x > W - margin) e.x = W - margin;
 
     const ratio = e.hp / e.maxHp;
     if (ratio < 0.5)  e.phase = 1;
@@ -1448,68 +1517,88 @@
   }
 
   function killBoss(e) {
+    if (e.dead) return;                  // FIX: don't run kill logic twice
     e.dead = true;
-    bossActive = false;
-    setBossBGM(false);
     sfx.bigboom();
     shake = 24; bombFlash = 20;
     for (let i=0;i<60;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ff8040', 60));
     for (let i=0;i<40;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffd84a', 50));
     for (let i=0;i<30;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffffff', 40));
-
     player.score += e.score;
     scoreFloaters.push({x:e.x, y:e.y, text:'+'+e.score, life:80, color:'#ffd84a'});
     for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
-
     if (e.bossType) { defeatedBosses[e.bossType] = true; saveDefeated(); }
 
     bossesKilledThisStage++;
-    const bossesNeeded = loopCount + 1;   // loop1=1体, loop2=2体, loop3=3体
 
-    if (bossesKilledThisStage < bossesNeeded) {
-      // More bosses needed this stage — spawn next after short delay
-      bossLock = true;
-      setTimeout(() => {
-        if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
-        showBanner('BOSS ' + (bossesKilledThisStage + 1) + ' / ' + bossesNeeded, 'NEXT ENEMY');
-        setTimeout(() => {
-          if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
-          const bossIdx = (stage - 1) % BOSS_TYPES.length;
-          const bossDef = BOSS_TYPES[bossIdx];
-          const hp = Math.floor((60 + stage * 15 + loopCount * 20) * (1 + bossesKilledThisStage * 0.25));
-          enemies.push({
-            type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
-            x:W/2, y:-32, vx:0, vy:0.4,
-            w:30, h:28, hp, maxHp:hp, score:Math.floor((5000 + stage*2000) * 0.5),
-            t:0, motion:'boss', isBoss:true, phase:0, shootCD:90, flash:0, targetY:40,
-          });
-          bossActive = true;
-          bossLock = false;
-          setBossBGM(true);
-        }, 2000);
-      }, 1500);
-      return;
-    }
+    // If more bosses still alive, just wait — don't advance yet.
+    if (bossCount() > 0) return;
 
-    // All bosses for this stage defeated — advance
-    bossLock = true;
+    // All bosses for this stage are now dead.
+    setBossBGM(false);
+    bossLock = true;  // hold the wave gate closed during transition
+
     setTimeout(() => {
       if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
 
       const isLastStage = (stage >= FINAL_STAGE);
+
+      if (loopCount >= 2) {
+        // Loop 3 was the FINAL stage with 3 mixed bosses. Game ends in CLEAR.
+        cleared = true;
+        const finalBonus = 100000;
+        const livesBonus = (player.lives + 1) * 10000;
+        player.score += finalBonus + livesBonus;
+        scoreFloaters.push({x:W/2, y:H/2 - 12, text:'CLEAR BONUS +'+finalBonus, life:120, color:'#ffd84a'});
+        scoreFloaters.push({x:W/2, y:H/2 + 4,  text:'LIVES BONUS +'+livesBonus, life:120, color:'#80ffe0'});
+        showBanner('CONGRATULATIONS', 'GAME CLEAR !!');
+
+        // After the celebration banner, go to high-score / over flow.
+        setTimeout(() => {
+          if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
+          stopBGM();
+          highScore = Math.max(highScore, player.score);
+          const r = rankOf(player.score, highScores);
+          if (r >= 0) {
+            nameEntry.rank = r;
+            nameEntry.score = player.score;
+            nameEntry.stage = stage;
+            nameEntry.name = Array(NAME_LEN).fill(' ');
+            nameEntry.pos = 0;
+            nameEntry.kb = 0;
+            nameEntry.blink = 0;
+            state = STATE.NAME_ENTRY;
+          } else {
+            state = STATE.OVER;
+          }
+        }, 3000);
+        return;
+      }
+
       if (isLastStage) {
-        // End of a loop — go endless
+        // End of loops 1 or 2 -> advance to next loop
         loopCount++;
         const loopBonus = 30000 * loopCount;
         player.score += loopBonus;
         scoreFloaters.push({x:W/2, y:H/2, text:'LOOP BONUS +'+loopBonus, life:100, color:'#ffd84a'});
-        stage = 1; stageWaves = 0;
         cleared = true;
-        const loopLabel = loopCount === 1 ? 'LOOP 2  x2 BOSSES' :
-                          loopCount === 2 ? 'LOOP 3  x3 BOSSES' :
-                                           'LOOP ' + (loopCount+1) + '  x' + (loopCount+1) + ' BOSSES';
-        showBanner('ALL CLEAR !!', loopLabel);
-        waveTimer = 180;
+
+        if (loopCount === 2) {
+          // Going into the FINAL loop (just one stage with 3 mixed bosses)
+          stage = FINAL_STAGE;
+          stageWaves = 0;
+          showBanner('FINAL STAGE !!', '3 OVERLORDS APPROACH');
+          waveTimer = 9999; // disable wave timer; we'll spawn boss directly
+          // Spawn the final 3-boss assault after the banner
+          setTimeout(() => {
+            if (state === STATE.PLAY || state === STATE.PAUSE) spawnBoss();
+          }, 2200);
+        } else {
+          // Loop 2: restart from stage 1
+          stage = 1; stageWaves = 0;
+          showBanner('ALL CLEAR !!', 'LOOP 2  x2 BOSSES');
+          waveTimer = 180;
+        }
       } else {
         stage++; stageWaves = 0;
         showBanner('STAGE ' + stage, 'GET READY');
@@ -1555,7 +1644,7 @@
   }
 
   function drawBackground() {
-    const bands = bossActive ? [
+    const bands = bossCount() > 0 ? [
       ['#1a0a18', 0,30],['#2a0e22', 30,60],['#3a1828', 60,100],
       ['#4a2438', 100,150],['#3a1828', 150,200],['#2a0e22', 200,224],
     ] : [
@@ -1638,20 +1727,29 @@
     drawText('SCORE', 4, 3, '#80c0ff', 6);
     drawText(String(player.score).padStart(7, '0'), 36, 3, '#fff080', 6);
     drawText('ST', W/2 - 14, 3, '#80c0ff', 6);
-    drawText(String(stage).padStart(2,'0'), W/2 + 2, 3, '#ffd84a', 6);
+    if (loopCount >= 2) {
+      drawText('FN', W/2 + 2, 3, '#ff4060', 6);
+    } else if (loopCount === 1) {
+      drawText(String(stage).padStart(2,'0') + '*', W/2 + 2, 3, '#ffd84a', 6);
+    } else {
+      drawText(String(stage).padStart(2,'0'), W/2 + 2, 3, '#ffd84a', 6);
+    }
     drawText('HI', W-78, 3, '#80c0ff', 6);
     drawText(String(Math.max(highScore, player.score)).padStart(7, '0'), W-66, 3, '#ffd84a', 6);
 
-    if (bossActive) {
-      const boss = enemies.find(e => e.isBoss);
-      if (boss) {
-        ctx.fillStyle = '#000'; ctx.fillRect(20, 16, W-40, 5);
-        ctx.fillStyle = '#400a14'; ctx.fillRect(21, 17, W-42, 3);
-        const r = Math.max(0, boss.hp / boss.maxHp);
-        ctx.fillStyle = r > 0.5 ? '#ff4060' : r > 0.25 ? '#ff8040' : '#ffd84a';
-        ctx.fillRect(21, 17, Math.floor((W-42)*r), 3);
-        drawText(boss.bossType || 'BOSS', 22, 22, '#ff6080', 6);
-      }
+    const bosses = enemies.filter(e => e.isBoss);
+    if (bosses.length > 0) {
+      let totalHp = 0, totalMax = 0;
+      for (const b of bosses) { totalHp += b.hp; totalMax += b.maxHp; }
+      ctx.fillStyle = '#000'; ctx.fillRect(20, 16, W-40, 5);
+      ctx.fillStyle = '#400a14'; ctx.fillRect(21, 17, W-42, 3);
+      const r = Math.max(0, totalHp / totalMax);
+      ctx.fillStyle = r > 0.5 ? '#ff4060' : r > 0.25 ? '#ff8040' : '#ffd84a';
+      ctx.fillRect(21, 17, Math.floor((W-42)*r), 3);
+      const label = bosses.length > 1
+        ? bosses[0].bossType + ' x' + bosses.length
+        : (bosses[0].bossType || 'BOSS');
+      drawText(label, 22, 22, '#ff6080', 6);
     }
 
     ctx.fillStyle = 'rgba(0,0,0,.55)';
@@ -1887,15 +1985,22 @@
     ctx.fillStyle = '#000';
     ctx.fillRect(0, H/2 - 14, W, 28);
     drawText('!! WARNING !!', W/2, H/2 - 10, blink ? '#ff4060' : '#ffd84a', 12, 'center');
-    const upcoming = BOSS_TYPES[Math.min(stage - 1, BOSS_TYPES.length - 1)].name;
-    const msgs = {
-      SQUID:  'COSMIC CALAMARI INBOUND',
-      UFO:    'UNKNOWN SAUCER DETECTED',
-      ONI:    'DEMON CLASS HOSTILE',
-      EYE: 'COSMIC OVERSEER AWAKENS',
-      LORD:   'THE DEMON LORD ARRIVES',
-    };
-    drawText(msgs[upcoming] || 'HOSTILE INBOUND', W/2, H/2 + 4, '#ffffff', 6, 'center');
+    let msg;
+    if (loopCount >= 2) {
+      msg = '3 OVERLORDS APPROACHING';
+    } else {
+      const upcoming = BOSS_TYPES[Math.min(stage - 1, BOSS_TYPES.length - 1)].name;
+      const msgs = {
+        SQUID:  'COSMIC CALAMARI INBOUND',
+        UFO:    'UNKNOWN SAUCER DETECTED',
+        ONI:    'DEMON CLASS HOSTILE',
+        EYE:    'COSMIC OVERSEER AWAKENS',
+        LORD:   'THE DEMON LORD ARRIVES',
+      };
+      msg = msgs[upcoming] || 'HOSTILE INBOUND';
+      if (loopCount === 1) msg = msg + ' x2';
+    }
+    drawText(msg, W/2, H/2 + 4, '#ffffff', 6, 'center');
   }
 
   function drawScoreFloaters() {
