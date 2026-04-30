@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -63,88 +64,99 @@
     background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
   }
 
-  /* Floating UI buttons (touch + mouse both supported) */
-  .ui-btn {
-    position: fixed;
-    z-index: 10;
-    background: rgba(20,20,30,.55);
-    border: 2px solid rgba(255,216,74,.5);
-    color: #ffd84a;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    cursor: pointer;
-    transition: transform .08s, background .15s;
-    user-select: none;
-    -webkit-user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
-  .ui-btn.disabled { opacity: .35; pointer-events: none; }
+/* Floating UI buttons (touch + mouse both supported) */
+.ui-btn {
+position: fixed;
+z-index: 10;
+background: rgba(20,20,30,.55);
+border: 2px solid rgba(255,216,74,.5);
+color: #ffd84a;
+font-family: ‘Press Start 2P’, monospace;
+font-size: 9px;
+border-radius: 12px;
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+cursor: pointer;
+transition: transform .08s, background .15s;
+user-select: none;
+-webkit-user-select: none;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
+.ui-btn.disabled { opacity: .35; pointer-events: none; }
 
-  #btn-bomb {
-    right: max(20px, env(safe-area-inset-right, 20px));
-    bottom: max(30px, env(safe-area-inset-bottom, 30px));
-    width: 78px; height: 78px;
-    border-color: #ff8040;
-    color: #ff8040;
-    font-size: 11px;
-    box-shadow: 0 0 20px rgba(255,128,64,.3);
-  }
-  #btn-bomb .count {
-    position: absolute;
-    bottom: 4px;
-    right: 8px;
-    font-size: 8px;
-    color: #fff080;
-  }
-  #btn-pause {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    right: max(14px, env(safe-area-inset-right, 14px));
-    width: 42px; height: 42px;
-  }
-  #btn-fs {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-  }
-  #btn-mute {
-    top: max(64px, calc(env(safe-area-inset-top, 14px) + 50px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-  }
-  /* Force consistent flat SVG icons - no emoji rendering on any platform */
-  .ui-btn svg {
-    width: 22px; height: 22px;
-    display: block;
-    pointer-events: none;
-  }
+#btn-bomb {
+right: max(20px, env(safe-area-inset-right, 20px));
+bottom: max(30px, env(safe-area-inset-bottom, 30px));
+width: 78px; height: 78px;
+border-color: #ff8040;
+color: #ff8040;
+font-size: 11px;
+box-shadow: 0 0 20px rgba(255,128,64,.3);
+}
+#btn-bomb .count {
+position: absolute;
+bottom: 4px;
+right: 8px;
+font-size: 8px;
+color: #fff080;
+}
+#btn-pause {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: max(14px, env(safe-area-inset-right, 14px));
+width: 42px; height: 42px;
+}
+#btn-fs {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+}
+#btn-mute {
+top: max(64px, calc(env(safe-area-inset-top, 14px) + 50px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+}
+/* Force consistent flat SVG icons - no emoji rendering on any platform */
+.ui-btn svg {
+width: 22px; height: 22px;
+display: block;
+pointer-events: none;
+}
 
-  /* Hide touch UI by default; shown when touch detected or on small screens */
-  body:not(.touch) #btn-bomb { display: none; }
-  body.touch #help-desktop { display: none; }
-  body:not(.touch) #help-mobile { display: none; }
+/* Hide touch UI by default; shown when touch detected or on small screens */
+body:not(.touch) #btn-bomb { display: none; }
+body.touch #help-desktop { display: none; }
+body:not(.touch) #help-mobile { display: none; }
+/* Fullscreen button only useful on desktop */
+body.touch #btn-fs { display: none; }
+/* Quit button: only visible during gameplay (not title) */
+#btn-quit {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-quit { display: flex; }
 
-  #help-desktop, #help-mobile {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #6080a0;
-    font-size: 8px;
-    letter-spacing: 1px;
-    pointer-events: none;
-    z-index: 4;
-    text-align: center;
-    line-height: 1.6;
-    text-shadow: 0 1px 0 #000;
-  }
-  #help-desktop b { color: #ffd84a; }
+#help-desktop, #help-mobile {
+position: fixed;
+bottom: 12px;
+left: 50%;
+transform: translateX(-50%);
+color: #6080a0;
+font-size: 8px;
+letter-spacing: 1px;
+pointer-events: none;
+z-index: 4;
+text-align: center;
+line-height: 1.6;
+text-shadow: 0 1px 0 #000;
+}
+#help-desktop b { color: #ffd84a; }
 </style>
+
 </head>
 <body>
   <div id="stage">
@@ -159,6 +171,12 @@
     </svg>
     <svg id="icon-fs-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter" style="display:none">
       <path d="M9 4 V9 H4"/><path d="M15 4 V9 H20"/><path d="M9 20 V15 H4"/><path d="M15 20 V15 H20"/>
+    </svg>
+  </button>
+  <!-- Quit button: shown during gameplay (in-game class on body) -->
+  <button id="btn-quit" class="ui-btn" aria-label="quit" title="Quit to title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
+      <path d="M10 19 L3 12 L10 5"/><path d="M3 12 H15"/><path d="M15 5 H21 V19 H15"/>
     </svg>
   </button>
   <button id="btn-mute" class="ui-btn" aria-label="mute" title="Mute">
@@ -224,7 +242,7 @@
     active: false,
     x: 0, y: 0,        // canvas coords (current target for the plane)
     fingerY: 0,        // raw finger y (canvas coords)
-    offsetY: 50,       // plane drawn this many px above finger
+    offsetY: 25,       // plane drawn this many px above finger (halved from 50)
   };
 
   function clientToCanvas(cx, cy) {
@@ -277,10 +295,11 @@
   const btnPause = document.getElementById('btn-pause');
   const btnFs    = document.getElementById('btn-fs');
   const btnMute  = document.getElementById('btn-mute');
+  const btnQuit  = document.getElementById('btn-quit');
   const bombCountEl = document.getElementById('bomb-count');
 
   // prevent buttons from triggering canvas touch handlers
-  [btnBomb, btnPause, btnFs, btnMute].forEach(b => {
+  [btnBomb, btnPause, btnFs, btnMute, btnQuit].filter(Boolean).forEach(b => {
     b.addEventListener('touchstart', e => e.stopPropagation());
     b.addEventListener('touchend',   e => e.stopPropagation());
   });
@@ -292,6 +311,17 @@
     if (state === STATE.PLAY) state = STATE.PAUSE;
     else if (state === STATE.PAUSE) state = STATE.PLAY;
   });
+
+  if (btnQuit) btnQuit.addEventListener('click', () => {
+    // Ask for confirmation via pause overlay; use a wantQuit flag
+    if (state === STATE.PLAY) { state = STATE.PAUSE; wantQuit = true; }
+    else if (state === STATE.PAUSE && wantQuit) {
+      wantQuit = false;
+      state = STATE.TITLE; titleBlink = 0;
+      stopBGM(); setBossBGM(false);
+    }
+  });
+  let wantQuit = false;
 
   btnFs.addEventListener('click', async () => {
     try {
@@ -756,6 +786,9 @@
   let waveTimer=0, waveCount=0, stage=1, stageWaves=0;
   const WAVES_PER_STAGE = 5;
   let bossActive=false, bossWarning=0;
+  let bossLock=false;        // prevents wave spawning during warning / spawn / transition
+  let loopCount=0;           // 0=first run, 1=2nd loop, 2=3rd loop...
+  let bossesKilledThisStage=0; // tracks multi-boss stages in endless loops
   let bombFlash=0, shake=0, highScore=0;
 
   // Name entry & scores screen state
@@ -787,7 +820,9 @@
     player.score=0; player.invuln=0; player.dead=false; player.deathTimer=0;
     bullets=[]; enemies=[]; ebullets=[]; particles=[]; powerups=[]; scoreFloaters=[];
     waveTimer=60; waveCount=0; stage=1; stageWaves=0;
-    bossActive=false; bossWarning=0; combo=0; comboTimer=0;
+    bossActive=false; bossWarning=0; bossLock=false;
+    loopCount=0; bossesKilledThisStage=0;
+    combo=0; comboTimer=0;
     cleared = false;
     showBanner('STAGE 1', 'TAKE OFF');
     updateBombUI();
@@ -798,31 +833,43 @@
     waveCount++; stageWaves++;
     if (stageWaves > WAVES_PER_STAGE) { spawnBoss(); return; }
     const diff = stage;
+    // Bonus zako: +1 per stage past 1, +2 per loop past 0. Capped to keep playable.
+    const bonus = Math.min(8, (stage - 1) + loopCount * 2);
     const pat = waveCount % 6;
     if (pat === 1) {
-      for (let i=0; i<7; i++) enemies.push(makeEnemy('A', 32 + i*28, -20 - Math.abs(i-3)*12, 0, 0.7 + diff*0.08));
+      const count = 7 + bonus;
+      for (let i=0; i<count; i++) enemies.push(makeEnemy('A', 16 + i*((W-32)/Math.max(1,count-1)), -20 - Math.abs(i-(count-1)/2)*10, 0, 0.7 + diff*0.08));
     } else if (pat === 2) {
-      for (let i=0; i<6; i++) enemies.push(makeEnemy('B', i%2 ? -16 : W+16, 20 + i*18, i%2 ? 1 : -1, 0.4 + diff*0.05, 'wave'));
+      const count = 6 + bonus;
+      for (let i=0; i<count; i++) enemies.push(makeEnemy('B', i%2 ? -16 : W+16, 16 + i*14, i%2 ? 1 : -1, 0.4 + diff*0.05, 'wave'));
     } else if (pat === 3) {
-      for (let i=0; i<5; i++) {
-        const e = makeEnemy('A', 40 + i*40, -20 - i*8, 0, 0.6 + diff*0.05);
+      const count = 5 + Math.ceil(bonus / 2);
+      for (let i=0; i<count; i++) {
+        const e = makeEnemy('A', 32 + i*((W-64)/Math.max(1,count-1)), -20 - i*8, 0, 0.6 + diff*0.05);
         e.shoots = true;
         enemies.push(e);
       }
     } else if (pat === 4) {
-      const c = makeEnemy('C', W/2, -30, 0, 0.35, 'sweep');
-      c.shoots = true; c.hp = 6 + diff;
-      enemies.push(c);
-      for (let i=0; i<4; i++) enemies.push(makeEnemy('A', W/2 + (i-1.5)*30, -50 - i*10, 0, 0.6));
+      const heavies = 1 + Math.floor(bonus / 4);
+      for (let h=0; h<heavies; h++) {
+        const c = makeEnemy('C', 60 + h*((W-120)/Math.max(1,heavies-1) || 0) + (heavies===1 ? (W/2 - 60) : 0), -30 - h*30, 0, 0.35, 'sweep');
+        c.shoots = true; c.hp = 6 + diff;
+        enemies.push(c);
+      }
+      const escorts = 4 + bonus;
+      for (let i=0; i<escorts; i++) enemies.push(makeEnemy('A', W/2 + (i-(escorts-1)/2)*22, -50 - i*8, 0, 0.6));
     } else if (pat === 5) {
-      for (let i=0; i<6; i++) {
-        const x = i < 3 ? 30 : W - 30;
-        enemies.push(makeEnemy('A', x, -20 - i*15, (i<3 ? 0.6 : -0.6), 1.0 + diff*0.1));
+      const perSide = 3 + Math.ceil(bonus / 2);
+      for (let i=0; i<perSide*2; i++) {
+        const x = i < perSide ? 30 : W - 30;
+        const localI = i % perSide;
+        enemies.push(makeEnemy('A', x, -20 - localI*12, (i<perSide ? 0.6 : -0.6), 1.0 + diff*0.1));
       }
     } else {
-      for (let i=0; i<8; i++) {
+      const count = 8 + bonus;
+      for (let i=0; i<count; i++) {
         const t = i%2 ? 'A' : 'B';
-        enemies.push(makeEnemy(t, 20 + i*28, -20 - (i%3)*15, 0, 0.55 + diff*0.05, i%3===0 ? 'wave' : null));
+        enemies.push(makeEnemy(t, 12 + i*((W-24)/Math.max(1,count-1)), -20 - (i%3)*15, 0, 0.55 + diff*0.05, i%3===0 ? 'wave' : null));
       }
     }
   }
@@ -838,19 +885,28 @@
   }
 
   function spawnBoss() {
+    if (bossLock || bossActive) return;   // prevent double-spawn
+    bossLock = true;
+    bossesKilledThisStage = 0;
+    stageWaves = 0;                       // FIX: reset immediately so the
+                                          // wave-spawn loop doesn't fire again
+                                          // before the boss appears or in the
+                                          // 1.5s gap after a boss dies.
     bossWarning = 120;
     sfx.warn();
     setTimeout(() => {
-      if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
-      const bossDef = BOSS_TYPES[Math.min(stage - 1, BOSS_TYPES.length - 1)];
-      const hp = 60 + stage * 15;
+      if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+      const bossIdx = (stage - 1) % BOSS_TYPES.length;
+      const bossDef = BOSS_TYPES[bossIdx];
+      const hp = 60 + stage * 15 + loopCount * 20;
       enemies.push({
         type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
         x:W/2, y:-32, vx:0, vy:0.4,
-        w:30, h:28, hp, maxHp:hp, score:5000 + stage*2000,
+        w:30, h:28, hp, maxHp:hp, score:5000 + stage*2000 + loopCount*1000,
         t:0, motion:'boss', isBoss:true, phase:0, shootCD:90, flash:0, targetY:40,
       });
       bossActive = true;
+      bossLock = false;
       setBossBGM(true);
     }, 2000);
   }
@@ -988,7 +1044,13 @@
       return;
     }
     if (state === STATE.PAUSE) {
-      if (pressed.KeyP) state = STATE.PLAY;
+      if (pressed.KeyP || pressed.Escape) { state = STATE.PLAY; wantQuit = false; }
+      // Q key quits to title
+      if (pressed.KeyQ) {
+        wantQuit = false;
+        state = STATE.TITLE; titleBlink = 0;
+        stopBGM(); setBossBGM(false);
+      }
       if (pressed.KeyM) muted = !muted;
       return;
     }
@@ -1105,9 +1167,10 @@
     for (const b of ebullets) { b.x += b.vx; b.y += b.vy; }
     ebullets = ebullets.filter(b => b.y < H+10 && b.y > -10 && b.x > -10 && b.x < W+10);
 
-    if (!bossActive) {
+    if (!bossActive && !bossLock && bossWarning <= 0) {
       waveTimer--;
-      if (waveTimer <= 0 && enemies.length < 8 && bossWarning <= 0) {
+      const enemyCap = 8 + Math.min(12, (stage - 1) * 2 + loopCount * 3);
+      if (waveTimer <= 0 && enemies.length < enemyCap) {
         spawnWave();
         waveTimer = Math.max(90, 180 - stage*15) + Math.random()*60;
       }
@@ -1395,51 +1458,66 @@
     for (let i=0;i<60;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ff8040', 60));
     for (let i=0;i<40;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffd84a', 50));
     for (let i=0;i<30;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffffff', 40));
-    // huge clear bonus on final stage
-    let bonus = e.score;
-    if (stage >= FINAL_STAGE) bonus += 50000;
-    player.score += bonus;
-    scoreFloaters.push({x:e.x, y:e.y, text:'+'+bonus, life:80, color:'#ffd84a'});
+
+    player.score += e.score;
+    scoreFloaters.push({x:e.x, y:e.y, text:'+'+e.score, life:80, color:'#ffd84a'});
     for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
-    // mark this boss as defeated for the bestiary
-    if (e.bossType) {
-      defeatedBosses[e.bossType] = true;
-      saveDefeated();
-    }
-    setTimeout(() => {
-      if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
-      if (stage >= FINAL_STAGE) {
-        // ALL CLEAR — game complete
-        cleared = true;
-        showBanner('ALL CLEAR !!', 'CONGRATULATIONS');
-        // After banner, end the run via the death pathway
+
+    if (e.bossType) { defeatedBosses[e.bossType] = true; saveDefeated(); }
+
+    bossesKilledThisStage++;
+    const bossesNeeded = loopCount + 1;   // loop1=1体, loop2=2体, loop3=3体
+
+    if (bossesKilledThisStage < bossesNeeded) {
+      // More bosses needed this stage — spawn next after short delay
+      bossLock = true;
+      setTimeout(() => {
+        if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+        showBanner('BOSS ' + (bossesKilledThisStage + 1) + ' / ' + bossesNeeded, 'NEXT ENEMY');
         setTimeout(() => {
-          if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
-          // award all-clear bonus per remaining life
-          const remBonus = (player.lives + 1) * 10000;
-          player.score += remBonus;
-          // Trigger high-score / game-over flow
-          highScore = Math.max(highScore, player.score);
-          stopBGM();
-          const r = rankOf(player.score, highScores);
-          if (r >= 0) {
-            nameEntry.rank = r;
-            nameEntry.score = player.score;
-            nameEntry.stage = stage;
-            nameEntry.name = [' ',' ',' ',' ',' ',' '];
-            nameEntry.pos = 0;
-            nameEntry.kb = 0;
-            nameEntry.blink = 0;
-            state = STATE.NAME_ENTRY;
-          } else {
-            state = STATE.OVER;
-          }
-        }, 2500);
+          if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+          const bossIdx = (stage - 1) % BOSS_TYPES.length;
+          const bossDef = BOSS_TYPES[bossIdx];
+          const hp = Math.floor((60 + stage * 15 + loopCount * 20) * (1 + bossesKilledThisStage * 0.25));
+          enemies.push({
+            type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
+            x:W/2, y:-32, vx:0, vy:0.4,
+            w:30, h:28, hp, maxHp:hp, score:Math.floor((5000 + stage*2000) * 0.5),
+            t:0, motion:'boss', isBoss:true, phase:0, shootCD:90, flash:0, targetY:40,
+          });
+          bossActive = true;
+          bossLock = false;
+          setBossBGM(true);
+        }, 2000);
+      }, 1500);
+      return;
+    }
+
+    // All bosses for this stage defeated — advance
+    bossLock = true;
+    setTimeout(() => {
+      if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+
+      const isLastStage = (stage >= FINAL_STAGE);
+      if (isLastStage) {
+        // End of a loop — go endless
+        loopCount++;
+        const loopBonus = 30000 * loopCount;
+        player.score += loopBonus;
+        scoreFloaters.push({x:W/2, y:H/2, text:'LOOP BONUS +'+loopBonus, life:100, color:'#ffd84a'});
+        stage = 1; stageWaves = 0;
+        cleared = true;
+        const loopLabel = loopCount === 1 ? 'LOOP 2  x2 BOSSES' :
+                          loopCount === 2 ? 'LOOP 3  x3 BOSSES' :
+                                           'LOOP ' + (loopCount+1) + '  x' + (loopCount+1) + ' BOSSES';
+        showBanner('ALL CLEAR !!', loopLabel);
+        waveTimer = 180;
       } else {
         stage++; stageWaves = 0;
         showBanner('STAGE ' + stage, 'GET READY');
         waveTimer = 90;
       }
+      bossLock = false;
     }, 1500);
   }
 
@@ -1776,8 +1854,15 @@
   function drawPauseOverlay() {
     ctx.fillStyle = 'rgba(0,0,0,.55)';
     ctx.fillRect(0, 0, W, H);
-    drawText('PAUSE', W/2, 100, '#ffffff', 16, 'center');
-    drawText(isTouch ? 'TAP II TO RESUME' : 'PRESS P TO RESUME', W/2, 125, '#80c0ff', 7, 'center');
+    drawText('PAUSE', W/2, 80, '#ffffff', 16, 'center');
+    drawText(isTouch ? 'TAP ▶ TO RESUME' : 'P / ESC : RESUME', W/2, 112, '#80c0ff', 7, 'center');
+    // Quit zone
+    ctx.fillStyle = 'rgba(180,30,40,0.2)';
+    ctx.fillRect(W/2 - 54, 130, 108, 22);
+    ctx.fillStyle = '#ff6060';
+    ctx.fillRect(W/2 - 54, 130, 108, 1);
+    ctx.fillRect(W/2 - 54, 151, 108, 1);
+    drawText(isTouch ? 'TAP ← TO QUIT' : 'Q : QUIT TO TITLE', W/2, 136, '#ff8080', 6, 'center');
   }
 
   function drawBanner() {
@@ -1845,6 +1930,9 @@
     if (player && bombCountEl) bombCountEl.textContent = String(player.bombs);
     if (player.bombs <= 0) btnBomb.classList.add('disabled');
     else btnBomb.classList.remove('disabled');
+    // Show quit / in-game overlay buttons only when actually playing
+    const inGame = (state === STATE.PLAY || state === STATE.PAUSE);
+    document.body.classList.toggle('in-game', inGame);
   }
 
   function render() {
@@ -1897,6 +1985,7 @@
   loop();
 })();
 </script>
+
 <script>
   // PWA service worker registration.
   // Skips environments where SW can't run (file://, blob:, embedded webviews
@@ -1913,5 +2002,6 @@
     });
   }
 </script>
+
 </body>
 </html>
