@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -63,99 +64,100 @@
     background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
   }
 
-  /* Floating UI buttons (touch + mouse both supported) */
-  .ui-btn {
-    position: fixed;
-    z-index: 10;
-    background: rgba(20,20,30,.55);
-    border: 2px solid rgba(255,216,74,.5);
-    color: #ffd84a;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    cursor: pointer;
-    transition: transform .08s, background .15s;
-    user-select: none;
-    -webkit-user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
-  .ui-btn.disabled { opacity: .35; pointer-events: none; }
+/* Floating UI buttons (touch + mouse both supported) */
+.ui-btn {
+position: fixed;
+z-index: 10;
+background: rgba(20,20,30,.55);
+border: 2px solid rgba(255,216,74,.5);
+color: #ffd84a;
+font-family: ‘Press Start 2P’, monospace;
+font-size: 9px;
+border-radius: 12px;
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+cursor: pointer;
+transition: transform .08s, background .15s;
+user-select: none;
+-webkit-user-select: none;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
+.ui-btn.disabled { opacity: .35; pointer-events: none; }
 
-  #btn-bomb {
-    right: max(20px, env(safe-area-inset-right, 20px));
-    bottom: max(30px, env(safe-area-inset-bottom, 30px));
-    width: 78px; height: 78px;
-    border-color: #ff8040;
-    color: #ff8040;
-    font-size: 11px;
-    box-shadow: 0 0 20px rgba(255,128,64,.3);
-  }
-  #btn-bomb .count {
-    position: absolute;
-    bottom: 4px;
-    right: 8px;
-    font-size: 8px;
-    color: #fff080;
-  }
-  #btn-pause {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    right: max(14px, env(safe-area-inset-right, 14px));
-    width: 42px; height: 42px;
-  }
-  #btn-fs {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-  }
-  /* Mute sits to the LEFT of pause in the top-right corner */
-  #btn-mute {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
-    width: 42px; height: 42px;
-  }
-  /* Force consistent flat SVG icons - no emoji rendering on any platform */
-  .ui-btn svg {
-    width: 22px; height: 22px;
-    display: block;
-    pointer-events: none;
-  }
+#btn-bomb {
+right: max(20px, env(safe-area-inset-right, 20px));
+bottom: max(30px, env(safe-area-inset-bottom, 30px));
+width: 78px; height: 78px;
+border-color: #ff8040;
+color: #ff8040;
+font-size: 11px;
+box-shadow: 0 0 20px rgba(255,128,64,.3);
+}
+#btn-bomb .count {
+position: absolute;
+bottom: 4px;
+right: 8px;
+font-size: 8px;
+color: #fff080;
+}
+#btn-pause {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: max(14px, env(safe-area-inset-right, 14px));
+width: 42px; height: 42px;
+}
+#btn-fs {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+}
+/* Mute sits to the LEFT of pause in the top-right corner */
+#btn-mute {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
+width: 42px; height: 42px;
+}
+/* Force consistent flat SVG icons - no emoji rendering on any platform */
+.ui-btn svg {
+width: 22px; height: 22px;
+display: block;
+pointer-events: none;
+}
 
-  /* Hide touch UI by default; shown when touch detected or on small screens */
-  body:not(.touch) #btn-bomb { display: none; }
-  body.touch #help-desktop { display: none; }
-  body:not(.touch) #help-mobile { display: none; }
-  /* Fullscreen button only useful on desktop */
-  body.touch #btn-fs { display: none; }
-  /* Quit button: only visible during gameplay (not title) */
-  #btn-quit {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-    display: none;
-  }
-  body.in-game #btn-quit { display: flex; }
+/* Hide touch UI by default; shown when touch detected or on small screens */
+body:not(.touch) #btn-bomb { display: none; }
+body.touch #help-desktop { display: none; }
+body:not(.touch) #help-mobile { display: none; }
+/* Fullscreen button only useful on desktop */
+body.touch #btn-fs { display: none; }
+/* Quit button: only visible during gameplay (not title) */
+#btn-quit {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-quit { display: flex; }
 
-  #help-desktop, #help-mobile {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #6080a0;
-    font-size: 8px;
-    letter-spacing: 1px;
-    pointer-events: none;
-    z-index: 4;
-    text-align: center;
-    line-height: 1.6;
-    text-shadow: 0 1px 0 #000;
-  }
-  #help-desktop b { color: #ffd84a; }
+#help-desktop, #help-mobile {
+position: fixed;
+bottom: 12px;
+left: 50%;
+transform: translateX(-50%);
+color: #6080a0;
+font-size: 8px;
+letter-spacing: 1px;
+pointer-events: none;
+z-index: 4;
+text-align: center;
+line-height: 1.6;
+text-shadow: 0 1px 0 #000;
+}
+#help-desktop b { color: #ffd84a; }
 </style>
+
 </head>
 <body>
   <div id="stage">
@@ -212,14 +214,25 @@
   function resizeCanvas() {
     const sw = window.innerWidth;
     const sh = window.innerHeight;
-    // fit canvas keeping aspect, integer-friendly scaling
-    const scale = Math.min(sw / W, sh / H);
-    const cw = Math.floor(W * scale);
-    const ch = Math.floor(H * scale);
+    const fitScale = Math.min(sw / W, sh / H);
+    const cw = Math.floor(W * fitScale);
+    const ch = Math.floor(H * fitScale);
+
+    // Set the canvas's INTERNAL resolution to match the on-screen physical
+    // pixel size. This avoids Safari resampling 256x224 -> ~750px every frame
+    // (which was the iPhone slowdown). We scale the drawing context so all
+    // game code can keep using 256x224 logical coordinates.
+    const dpr = window.devicePixelRatio || 1;
+    cv.width  = Math.floor(cw * dpr);
+    cv.height = Math.floor(ch * dpr);
     cv.style.width  = cw + 'px';
     cv.style.height = ch + 'px';
-    // store scale rect for touch coord conversion
-    cv._scale = scale;
+    // The combined scale from logical (256x224) to physical pixels:
+    const drawScale = (cw * dpr) / W;
+    ctx.setTransform(drawScale, 0, 0, drawScale, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+
+    cv._scale = fitScale;          // CSS px per logical px (for touch coords)
     cv._offX = (sw - cw) / 2;
     cv._offY = (sh - ch) / 2;
   }
@@ -674,6 +687,11 @@
     '  EEEE  ',' EFFFFE ','EFEEEEFE','EFEFFEFE',
     'EFEFFEFE','EFEEEEFE',' EFFFFE ','  EEEE  ',
   ]);
+  // Pixel heart for extra life
+  const SPR_LIFE = makeSprite([
+    ' KK  KK ','KSSKKSSK','KSGSSGSK','KSSSSSSK',
+    'KSSSSSSK',' KSSSSK ','  KSSK  ','   KK   ',
+  ]);
 
   // ---------- STATE ----------
   const STATE = { TITLE:0, PLAY:1, OVER:2, PAUSE:3, NAME_ENTRY:4, SCORES:5, BESTIARY:6 };
@@ -789,6 +807,7 @@
   let loopCount=0;           // 0=first run, 1=2nd loop, 2=3rd loop...
   let bossesKilledThisStage=0; // tracks multi-boss stages in endless loops
   let bossesNeededThisStage=1; // total bosses spawned this stage
+  let totalBossKills=0;        // running total across the run; every 4 → life drop
   let bombFlash=0, shake=0, highScore=0;
 
   // Name entry & scores screen state
@@ -821,7 +840,7 @@
     bullets=[]; enemies=[]; ebullets=[]; particles=[]; powerups=[]; scoreFloaters=[];
     waveTimer=60; waveCount=0; stage=1; stageWaves=0;
     bossWarning=0; bossLock=false;
-    loopCount=0; bossesKilledThisStage=0;
+    loopCount=0; bossesKilledThisStage=0; totalBossKills=0;
     combo=0; comboTimer=0;
     cleared = false;
     showBanner('STAGE 1', 'TAKE OFF');
@@ -885,10 +904,14 @@
   }
 
   // Returns how many boss enemies are currently alive
-  function bossCount() {
+  // Cached per-frame to avoid repeated O(N) scans of `enemies` from multiple
+  // callers (wave gate, drawBackground, updateBoss for each boss, etc.)
+  let _bossCountCache = 0;
+  function bossCount() { return _bossCountCache; }
+  function recomputeBossCount() {
     let n = 0;
     for (const e of enemies) if (e.isBoss && !e.dead) n++;
-    return n;
+    _bossCountCache = n;
   }
 
   // Build a single boss enemy. role 0=center, 1=left, 2=right, 3=far-left, 4=far-right
@@ -969,6 +992,7 @@
 
   function update() {
     tickBGM();
+    recomputeBossCount();
 
     if (state === STATE.TITLE) {
       titleBlink++;
@@ -1124,19 +1148,15 @@
       if (touch.active) {
         const tx = Math.max(8, Math.min(W-8, touch.x));
         const ty = Math.max(16, Math.min(H-18, touch.y));
-        const dx = tx - player.x;
-        const dy = ty - player.y;
-        const dist = Math.hypot(dx, dy);
-        const maxStep = 3.0;
-        if (dist > 0.5) {
-          if (dist <= maxStep) {
-            player.x = tx; player.y = ty;
-          } else {
-            player.x += dx / dist * maxStep;
-            player.y += dy / dist * maxStep;
-          }
-        }
-        // store horizontal direction for sprite tilt
+        // Snap directly to finger target — no per-frame speed cap. With the
+        // touch offset (plane shown ~50px above finger) the plane stays
+        // visible. Direct snap is how Sky Force / similar mobile shooters
+        // handle it and feels much more responsive than physics-pulled motion.
+        const prevX = player.x;
+        player.x = tx;
+        player.y = ty;
+        // Use frame delta for sprite tilt (still bounded for visual reasons)
+        const dx = tx - prevX;
         player.vx = Math.sign(dx) * Math.min(1, Math.abs(dx)/4);
       } else {
         // ----- KEYBOARD MOVEMENT -----
@@ -1187,6 +1207,7 @@
         }
         for (const b of toKill) killBoss(b);
         enemies = enemies.filter(e => !e.dead);
+        recomputeBossCount();
         ebullets = [];
         updateBombUI();
       }
@@ -1257,6 +1278,7 @@
       }
     }
     enemies = enemies.filter(e => e.isBoss || (e.y < H + 30 && e.x > -30 && e.x < W + 30));
+    recomputeBossCount();
 
     for (const p of powerups) { p.y += 0.7; p.t = (p.t||0) + 1; }
     powerups = powerups.filter(p => p.y < H + 10);
@@ -1301,6 +1323,7 @@
     }
     bullets = bullets.filter(b => !b.dead);
     enemies = enemies.filter(e => !e.dead);
+    recomputeBossCount();
 
     if (!player.dead && player.invuln <= 0) {
       for (const b of ebullets) {
@@ -1331,6 +1354,10 @@
         if (Math.abs(p.x - player.x) < 8 && Math.abs(p.y - player.y) < 8) {
           p.dead = true;
           if (p.type === 'B') { player.bombs = Math.min(9, player.bombs + 1); updateBombUI(); }
+          else if (p.type === 'L') {
+            player.lives = Math.min(9, player.lives + 1);
+            scoreFloaters.push({x:p.x, y:p.y-6, text:'1UP', life:60, color:'#ff80a0'});
+          }
           else { if (player.power < 3) player.power++; else player.score += 500; }
           sfx.power();
         }
@@ -1530,8 +1557,16 @@
     if (e.bossType) { defeatedBosses[e.bossType] = true; saveDefeated(); }
 
     bossesKilledThisStage++;
+    totalBossKills++;
+    // Every 4 boss kills, drop an extra life (heart) at the boss's position.
+    if (totalBossKills % 4 === 0) {
+      powerups.push({x: e.x, y: e.y - 4, t: 0, type: 'L'});
+    }
 
-    // If more bosses still alive, just wait — don't advance yet.
+    // The cached bossCount is stale here (we just set e.dead inside the same
+    // frame). Recompute before checking, otherwise we'd think other bosses
+    // are still alive and never advance the stage.
+    recomputeBossCount();
     if (bossCount() > 0) return;
 
     // All bosses for this stage are now dead.
@@ -1709,7 +1744,11 @@
   function drawPowerups() {
     for (const p of powerups) {
       const bob = Math.sin(p.t * 0.15) * 1.5;
-      drawSprite(p.type === 'B' ? SPR_BOMB_ITEM : SPR_POWER, p.x, p.y + bob);
+      let spr;
+      if (p.type === 'B') spr = SPR_BOMB_ITEM;
+      else if (p.type === 'L') spr = SPR_LIFE;
+      else spr = SPR_POWER;
+      drawSprite(spr, p.x, p.y + bob);
     }
   }
 
@@ -2020,22 +2059,44 @@
   const iconFsEnter = document.getElementById('icon-fs-enter');
   const iconFsExit  = document.getElementById('icon-fs-exit');
 
+  // UI sync: only writes to the DOM when the state it reads has actually
+  // changed. Calling this 60 times/sec was forcing the browser to constantly
+  // reflow even when nothing was different.
+  const uiState = {
+    muted: null, paused: null, isFs: null, bombs: null, inGame: null,
+  };
   function syncUIIcons() {
-    if (iconWaves) iconWaves.style.display = muted ? 'none' : '';
-    if (iconX)     iconX.style.display     = muted ? '' : 'none';
+    if (uiState.muted !== muted) {
+      uiState.muted = muted;
+      if (iconWaves) iconWaves.style.display = muted ? 'none' : '';
+      if (iconX)     iconX.style.display     = muted ? '' : 'none';
+    }
     const paused = (state === STATE.PAUSE);
-    if (iconPause) iconPause.style.display = paused ? 'none' : '';
-    if (iconPlay)  iconPlay.style.display  = paused ? '' : 'none';
+    if (uiState.paused !== paused) {
+      uiState.paused = paused;
+      if (iconPause) iconPause.style.display = paused ? 'none' : '';
+      if (iconPlay)  iconPlay.style.display  = paused ? '' : 'none';
+    }
     const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    if (iconFsEnter) iconFsEnter.style.display = isFs ? 'none' : '';
-    if (iconFsExit)  iconFsExit.style.display  = isFs ? '' : 'none';
-    if (btnFs) btnFs.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
-    if (player && bombCountEl) bombCountEl.textContent = String(player.bombs);
-    if (player.bombs <= 0) btnBomb.classList.add('disabled');
-    else btnBomb.classList.remove('disabled');
-    // Show quit / in-game overlay buttons only when actually playing
+    if (uiState.isFs !== isFs) {
+      uiState.isFs = isFs;
+      if (iconFsEnter) iconFsEnter.style.display = isFs ? 'none' : '';
+      if (iconFsExit)  iconFsExit.style.display  = isFs ? '' : 'none';
+      if (btnFs) btnFs.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
+    }
+    if (player && uiState.bombs !== player.bombs) {
+      uiState.bombs = player.bombs;
+      if (bombCountEl) bombCountEl.textContent = String(player.bombs);
+      if (btnBomb) {
+        if (player.bombs <= 0) btnBomb.classList.add('disabled');
+        else btnBomb.classList.remove('disabled');
+      }
+    }
     const inGame = (state === STATE.PLAY || state === STATE.PAUSE);
-    document.body.classList.toggle('in-game', inGame);
+    if (uiState.inGame !== inGame) {
+      uiState.inGame = inGame;
+      document.body.classList.toggle('in-game', inGame);
+    }
   }
 
   function render() {
@@ -2088,6 +2149,7 @@
   loop();
 })();
 </script>
+
 <script>
   // PWA service worker registration.
   // Skips environments where SW can't run (file://, blob:, embedded webviews
@@ -2104,5 +2166,6 @@
     });
   }
 </script>
+
 </body>
 </html>
