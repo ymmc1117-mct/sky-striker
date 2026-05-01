@@ -107,7 +107,9 @@ color: #fff080;
 top: max(14px, env(safe-area-inset-top, 14px));
 right: max(14px, env(safe-area-inset-right, 14px));
 width: 42px; height: 42px;
+display: none;
 }
+body.in-game #btn-pause { display: flex; }
 #btn-fs {
 top: max(14px, env(safe-area-inset-top, 14px));
 left: max(14px, env(safe-area-inset-left, 14px));
@@ -118,7 +120,9 @@ width: 42px; height: 42px;
 top: max(14px, env(safe-area-inset-top, 14px));
 right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
 width: 42px; height: 42px;
+display: none;
 }
+body.in-game #btn-mute { display: flex; }
 /* Force consistent flat SVG icons - no emoji rendering on any platform */
 .ui-btn svg {
 width: 22px; height: 22px;
@@ -128,6 +132,9 @@ pointer-events: none;
 
 /* Hide touch UI by default; shown when touch detected or on small screens */
 body:not(.touch) #btn-bomb { display: none; }
+/* Bomb button only during gameplay even on touch devices */
+body.touch #btn-bomb { display: none; }
+body.touch.in-game #btn-bomb { display: flex; }
 body.touch #help-desktop { display: none; }
 body:not(.touch) #help-mobile { display: none; }
 /* Fullscreen button only useful on desktop */
@@ -1504,30 +1511,30 @@ text-shadow: 0 1px 0 #000;
         // Heavy aimed projectiles, twin volleys, dense scatter
         if (e.phase === 0) {
           // twin big aimed bullets + flanking shots
-          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.8, vy:dy/d*1.8, big:true});
-          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.8, vy:dy/d*1.8, big:true});
+          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.6, vy:dy/d*1.6, big:true});
+          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.6, vy:dy/d*1.6, big:true});
           // 2 spread shots either side
-          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang+0.35)*1.7, vy:Math.sin(ang+0.35)*1.7, big:false});
-          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang-0.35)*1.7, vy:Math.sin(ang-0.35)*1.7, big:false});
-          e.shootCD = 45;
+          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang+0.35)*1.5, vy:Math.sin(ang+0.35)*1.5, big:false});
+          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang-0.35)*1.5, vy:Math.sin(ang-0.35)*1.5, big:false});
+          e.shootCD = 60;
         } else if (e.phase === 1) {
-          // 7-way wide spread + a fast aimed big bullet
-          for (let i=-3; i<=3; i++) {
-            const a = ang + i * 0.20;
-            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.7, vy:Math.sin(a)*1.7, big:i===0});
+          // 5-way spread + a fast aimed big bullet
+          for (let i=-2; i<=2; i++) {
+            const a = ang + i * 0.22;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.5, vy:Math.sin(a)*1.5, big:i===0});
           }
-          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.4, vy:dy/d*2.4, big:true});
-          e.shootCD = 40;
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.1, vy:dy/d*2.1, big:true});
+          e.shootCD = 50;
         } else {
           // chaos: scatter + aimed barrage
-          for (let i=0; i<10; i++) {
-            const a = ang + (Math.random()-0.5) * 1.4;
-            const sp = 1.6 + Math.random()*0.8;
+          for (let i=0; i<7; i++) {
+            const a = ang + (Math.random()-0.5) * 1.3;
+            const sp = 1.4 + Math.random()*0.7;
             ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, big:false});
           }
           // plus a center big shot
-          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.2, vy:dy/d*2.2, big:true});
-          e.shootCD = 28;
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.0, vy:dy/d*2.0, big:true});
+          e.shootCD = 38;
         }
         return;
       }
@@ -1560,32 +1567,39 @@ text-shadow: 0 1px 0 #000;
         return;
       }
       case 'LORD': {
-        // Aimed laser shots and expanding rings
+        // Aimed laser shots, expanding rings, multi-volley barrages
         if (e.phase === 0) {
-          // single aimed big shot, fast
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.6, vy:dy/d*2.6, big:true});
-          // pair of side bullets
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.2 + 0.6, vy:dy/d*2.2, big:false});
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.2 - 0.6, vy:dy/d*2.2, big:false});
-          e.shootCD = 50;
+          // double aimed big shots in quick succession + 4-way spread
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
+          ebullets.push({x:e.x-6, y:e.y+4, vx:dx/d*2.4 + 0.8, vy:dy/d*2.4, big:false});
+          ebullets.push({x:e.x+6, y:e.y+4, vx:dx/d*2.4 - 0.8, vy:dy/d*2.4, big:false});
+          // 2 wider flanking shots
+          ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(ang+0.45)*2.2, vy:Math.sin(ang+0.45)*2.2, big:false});
+          ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(ang-0.45)*2.2, vy:Math.sin(ang-0.45)*2.2, big:false});
+          e.shootCD = 38;
         } else if (e.phase === 1) {
-          // expanding ring
-          for (let i=0; i<12; i++) {
-            const a = (i / 12) * Math.PI * 2;
-            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.6, vy:Math.sin(a)*1.6, big:false});
-          }
-          e.shootCD = 55;
-        } else {
-          // ring + aimed laser
-          for (let i=0; i<10; i++) {
-            const a = (i / 10) * Math.PI * 2 + e.t*0.02;
+          // expanding ring + aimed big shot through center
+          for (let i=0; i<14; i++) {
+            const a = (i / 14) * Math.PI * 2;
             ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.8, vy:Math.sin(a)*1.8, big:false});
           }
-          for (let i=-1; i<=1; i++) {
-            const a = ang + i * 0.06;
-            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.8, vy:Math.sin(a)*2.8, big:i===0});
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
+          e.shootCD = 42;
+        } else {
+          // double-ring + aimed laser triplet — final desperation
+          for (let i=0; i<12; i++) {
+            const a = (i / 12) * Math.PI * 2 + e.t*0.02;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
           }
-          e.shootCD = 35;
+          for (let i=0; i<8; i++) {
+            const a = (i / 8) * Math.PI * 2 - e.t*0.015;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.3, vy:Math.sin(a)*1.3, big:false});
+          }
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.08;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*3.0, vy:Math.sin(a)*3.0, big:i===0});
+          }
+          e.shootCD = 24;
         }
         return;
       }
@@ -1629,12 +1643,11 @@ text-shadow: 0 1px 0 #000;
 
     bossesKilledThisStage++;
     totalBossKills++;
-    // Every 3 boss kills, drop an extra life heart on its OWN — no P/B
-    // powerups stacking on top of it. Otherwise drop the usual P/B/P trio.
+    // Always drop the P/B/P trio. Every 3 boss kills, ALSO drop a heart
+    // floating just above the trio so the icons don't overlap.
+    for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
     if (totalBossKills % 3 === 0) {
-      powerups.push({x: e.x, y: e.y, t: 0, type: 'L'});
-    } else {
-      for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
+      powerups.push({x: e.x, y: e.y - 16, t: 0, type: 'L'});
     }
 
     // The cached bossCount is stale here (we just set e.dead inside the same
