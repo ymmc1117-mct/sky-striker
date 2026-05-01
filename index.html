@@ -792,6 +792,7 @@ text-shadow: 0 1px 0 #000;
   }
   let defeatedBosses = loadDefeated();
   let cleared = false;
+  let gameComplete = false;  // becomes true after the final 3-boss assault is defeated
   let bestiaryIdx = 0;
   let state = STATE.TITLE;
   let titleBlink = 0;
@@ -882,7 +883,7 @@ text-shadow: 0 1px 0 #000;
     bossWarning=0; bossLock=false;
     loopCount=0; bossesKilledThisStage=0; totalBossKills=0;
     combo=0; comboTimer=0;
-    cleared = false;
+    cleared = false; gameComplete = false;
     showBanner('STAGE 1-1', 'TAKE OFF');
     updateBombUI();
   }
@@ -1320,7 +1321,7 @@ text-shadow: 0 1px 0 #000;
     for (const b of ebullets) { b.x += b.vx; b.y += b.vy; }
     ebullets = ebullets.filter(b => b.y < H+10 && b.y > -10 && b.x > -10 && b.x < W+10);
 
-    if (bossCount() === 0 && !bossLock && bossWarning <= 0) {
+    if (bossCount() === 0 && !bossLock && bossWarning <= 0 && !gameComplete) {
       waveTimer--;
       const enemyCap = 8 + Math.min(12, (stage - 1) * 2 + loopCount * 3);
       if (waveTimer <= 0 && enemies.length < enemyCap) {
@@ -1565,26 +1566,26 @@ text-shadow: 0 1px 0 #000;
       case 'LORD': {
         // Focused aimed attacks rather than fireworks rings
         if (e.phase === 0) {
-          // single big aimed shot + 2 flanking shots
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
-          ebullets.push({x:e.x-6, y:e.y+4, vx:dx/d*2.4 + 0.8, vy:dy/d*2.4, big:false});
-          ebullets.push({x:e.x+6, y:e.y+4, vx:dx/d*2.4 - 0.8, vy:dy/d*2.4, big:false});
-          e.shootCD = 55;
+          // single big aimed shot + 2 flanking shots, faster
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*3.2, vy:dy/d*3.2, big:true});
+          ebullets.push({x:e.x-6, y:e.y+4, vx:dx/d*2.8 + 0.9, vy:dy/d*2.8, big:false});
+          ebullets.push({x:e.x+6, y:e.y+4, vx:dx/d*2.8 - 0.9, vy:dy/d*2.8, big:false});
+          e.shootCD = 50;
         } else if (e.phase === 1) {
-          // 5-way aimed spread (no full ring)
+          // 5-way aimed spread, faster
           for (let i=-2; i<=2; i++) {
             const a = ang + i * 0.22;
-            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.2, vy:Math.sin(a)*2.2, big:i===0});
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.6, vy:Math.sin(a)*2.6, big:i===0});
           }
-          e.shootCD = 60;
+          e.shootCD = 52;
         } else {
-          // 7-way aimed spread + single fast aimed laser
+          // 7-way aimed spread + fast aimed laser
           for (let i=-3; i<=3; i++) {
             const a = ang + i * 0.20;
-            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.2, vy:Math.sin(a)*2.2, big:i===0});
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.6, vy:Math.sin(a)*2.6, big:i===0});
           }
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*3.0, vy:dy/d*3.0, big:true});
-          e.shootCD = 45;
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*3.5, vy:dy/d*3.5, big:true});
+          e.shootCD = 40;
         }
         return;
       }
@@ -1630,11 +1631,9 @@ text-shadow: 0 1px 0 #000;
     totalBossKills++;
     // Always drop the P/B/P trio.
     for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
-    // Every 3 boss kills, drop 3 hearts side by side above the trio.
-    if (totalBossKills % 3 === 0) {
-      for (let i=0;i<3;i++) {
-        powerups.push({x: e.x + (i-1)*16, y: e.y - 16, t: 0, type: 'L'});
-      }
+    // Every 2 boss kills, drop 1 heart above the trio.
+    if (totalBossKills % 2 === 0) {
+      powerups.push({x: e.x, y: e.y - 16, t: 0, type: 'L'});
     }
 
     // The cached bossCount is stale here (we just set e.dead inside the same
@@ -1655,12 +1654,17 @@ text-shadow: 0 1px 0 #000;
       if (loopCount >= 2) {
         // Loop 3 was the FINAL stage with 3 mixed bosses. Game ends in CLEAR.
         cleared = true;
+        gameComplete = true;
+        // Clear the screen of any leftover bullets / enemies for a calm celebration.
+        ebullets.length = 0;
+        enemies.length = 0;
         const finalBonus = 100000;
         const livesBonus = (player.lives + 1) * 10000;
         player.score += finalBonus + livesBonus;
         scoreFloaters.push({x:W/2, y:H/2 - 12, text:'CLEAR BONUS +'+finalBonus, life:120, color:'#ffd84a'});
         scoreFloaters.push({x:W/2, y:H/2 + 4,  text:'LIVES BONUS +'+livesBonus, life:120, color:'#80ffe0'});
         showBanner('CONGRATULATIONS', 'GAME CLEAR !!');
+        bannerTimer = 300; // hold banner for 5s celebration
 
         // After the celebration banner, go to high-score / over flow.
         scheduleGame(() => {
@@ -1680,7 +1684,7 @@ text-shadow: 0 1px 0 #000;
           } else {
             state = STATE.OVER;
           }
-        }, 3000);
+        }, 5000);
         return;
       }
 
@@ -1996,7 +2000,7 @@ text-shadow: 0 1px 0 #000;
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, W, H);
 
-    drawText('NEW HIGH SCORE !!', W/2, 6, '#ffd84a', 8, 'center');
+    drawText(cleared ? 'GAME CLEAR !!' : 'NEW HIGH SCORE !!', W/2, 6, '#ffd84a', 8, 'center');
     drawText('RANK ' + (nameEntry.rank + 1) + '   STAGE ' + entryStageLabel({stage: nameEntry.stage, loop: nameEntry.loop}), W/2, 18, '#80c0ff', 6, 'center');
     drawText(String(nameEntry.score).padStart(7, '0'), W/2, 28, '#fff080', 8, 'center');
 
@@ -2053,11 +2057,20 @@ text-shadow: 0 1px 0 #000;
   }
 
   function drawGameOver() {
-    drawText('GAME', W/2, 70, '#ff4060', 20, 'center');
-    drawText('OVER', W/2, 95, '#ff4060', 20, 'center');
-    drawText('STAGE  ' + stage, W/2, 125, '#80c0ff', 7, 'center');
-    drawText('SCORE  ' + String(player.score).padStart(7, '0'), W/2, 140, '#ffd84a', 7, 'center');
-    drawText('HI     ' + String(Math.max(highScore, player.score)).padStart(7, '0'), W/2, 155, '#80c0ff', 7, 'center');
+    if (cleared) {
+      drawText('GAME', W/2, 50, '#ffd84a', 20, 'center');
+      drawText('CLEAR', W/2, 75, '#ffd84a', 20, 'center');
+      drawText('CONGRATULATIONS !!', W/2, 110, '#80ffe0', 7, 'center');
+      drawText('STAGE  FINAL', W/2, 130, '#ff80c0', 7, 'center');
+      drawText('SCORE  ' + String(player.score).padStart(7, '0'), W/2, 145, '#ffd84a', 7, 'center');
+      drawText('HI     ' + String(Math.max(highScore, player.score)).padStart(7, '0'), W/2, 160, '#80c0ff', 7, 'center');
+    } else {
+      drawText('GAME', W/2, 70, '#ff4060', 20, 'center');
+      drawText('OVER', W/2, 95, '#ff4060', 20, 'center');
+      drawText('STAGE  ' + stageLabel(), W/2, 125, '#80c0ff', 7, 'center');
+      drawText('SCORE  ' + String(player.score).padStart(7, '0'), W/2, 140, '#ffd84a', 7, 'center');
+      drawText('HI     ' + String(Math.max(highScore, player.score)).padStart(7, '0'), W/2, 155, '#80c0ff', 7, 'center');
+    }
     if (Math.floor(titleBlink/30) % 2) {
       const msg = isTouch ? 'TAP  TO  CONTINUE' : 'PRESS  Z  TO CONTINUE';
       drawText(msg, W/2, 185, '#ffffff', 7, 'center');
