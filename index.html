@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -63,99 +64,100 @@
     background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
   }
 
-  /* Floating UI buttons (touch + mouse both supported) */
-  .ui-btn {
-    position: fixed;
-    z-index: 10;
-    background: rgba(20,20,30,.55);
-    border: 2px solid rgba(255,216,74,.5);
-    color: #ffd84a;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    cursor: pointer;
-    transition: transform .08s, background .15s;
-    user-select: none;
-    -webkit-user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
-  .ui-btn.disabled { opacity: .35; pointer-events: none; }
+/* Floating UI buttons (touch + mouse both supported) */
+.ui-btn {
+position: fixed;
+z-index: 10;
+background: rgba(20,20,30,.55);
+border: 2px solid rgba(255,216,74,.5);
+color: #ffd84a;
+font-family: ‘Press Start 2P’, monospace;
+font-size: 9px;
+border-radius: 12px;
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+cursor: pointer;
+transition: transform .08s, background .15s;
+user-select: none;
+-webkit-user-select: none;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
+.ui-btn.disabled { opacity: .35; pointer-events: none; }
 
-  #btn-bomb {
-    right: max(20px, env(safe-area-inset-right, 20px));
-    bottom: max(30px, env(safe-area-inset-bottom, 30px));
-    width: 78px; height: 78px;
-    border-color: #ff8040;
-    color: #ff8040;
-    font-size: 11px;
-    box-shadow: 0 0 20px rgba(255,128,64,.3);
-  }
-  #btn-bomb .count {
-    position: absolute;
-    bottom: 4px;
-    right: 8px;
-    font-size: 8px;
-    color: #fff080;
-  }
-  #btn-pause {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    right: max(14px, env(safe-area-inset-right, 14px));
-    width: 42px; height: 42px;
-  }
-  #btn-fs {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-  }
-  /* Mute sits to the LEFT of pause in the top-right corner */
-  #btn-mute {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
-    width: 42px; height: 42px;
-  }
-  /* Force consistent flat SVG icons - no emoji rendering on any platform */
-  .ui-btn svg {
-    width: 22px; height: 22px;
-    display: block;
-    pointer-events: none;
-  }
+#btn-bomb {
+right: max(20px, env(safe-area-inset-right, 20px));
+bottom: max(30px, env(safe-area-inset-bottom, 30px));
+width: 78px; height: 78px;
+border-color: #ff8040;
+color: #ff8040;
+font-size: 11px;
+box-shadow: 0 0 20px rgba(255,128,64,.3);
+}
+#btn-bomb .count {
+position: absolute;
+bottom: 4px;
+right: 8px;
+font-size: 8px;
+color: #fff080;
+}
+#btn-pause {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: max(14px, env(safe-area-inset-right, 14px));
+width: 42px; height: 42px;
+}
+#btn-fs {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+}
+/* Mute sits to the LEFT of pause in the top-right corner */
+#btn-mute {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
+width: 42px; height: 42px;
+}
+/* Force consistent flat SVG icons - no emoji rendering on any platform */
+.ui-btn svg {
+width: 22px; height: 22px;
+display: block;
+pointer-events: none;
+}
 
-  /* Hide touch UI by default; shown when touch detected or on small screens */
-  body:not(.touch) #btn-bomb { display: none; }
-  body.touch #help-desktop { display: none; }
-  body:not(.touch) #help-mobile { display: none; }
-  /* Fullscreen button only useful on desktop */
-  body.touch #btn-fs { display: none; }
-  /* Quit button: only visible during gameplay (not title) */
-  #btn-quit {
-    top: max(14px, env(safe-area-inset-top, 14px));
-    left: max(14px, env(safe-area-inset-left, 14px));
-    width: 42px; height: 42px;
-    display: none;
-  }
-  body.in-game #btn-quit { display: flex; }
+/* Hide touch UI by default; shown when touch detected or on small screens */
+body:not(.touch) #btn-bomb { display: none; }
+body.touch #help-desktop { display: none; }
+body:not(.touch) #help-mobile { display: none; }
+/* Fullscreen button only useful on desktop */
+body.touch #btn-fs { display: none; }
+/* Quit button: only visible during gameplay (not title) */
+#btn-quit {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-quit { display: flex; }
 
-  #help-desktop, #help-mobile {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #6080a0;
-    font-size: 8px;
-    letter-spacing: 1px;
-    pointer-events: none;
-    z-index: 4;
-    text-align: center;
-    line-height: 1.6;
-    text-shadow: 0 1px 0 #000;
-  }
-  #help-desktop b { color: #ffd84a; }
+#help-desktop, #help-mobile {
+position: fixed;
+bottom: 12px;
+left: 50%;
+transform: translateX(-50%);
+color: #6080a0;
+font-size: 8px;
+letter-spacing: 1px;
+pointer-events: none;
+z-index: 4;
+text-align: center;
+line-height: 1.6;
+text-shadow: 0 1px 0 #000;
+}
+#help-desktop b { color: #ffd84a; }
 </style>
+
 </head>
 <body>
   <div id="stage">
@@ -323,13 +325,10 @@
   });
 
   if (btnQuit) btnQuit.addEventListener('click', () => {
-    // Ask for confirmation via pause overlay; use a wantQuit flag
+    // Always open the confirmation dialog (paused state with wantQuit=true).
+    // Quitting requires explicit YES on the on-canvas dialog.
     if (state === STATE.PLAY) { state = STATE.PAUSE; wantQuit = true; }
-    else if (state === STATE.PAUSE && wantQuit) {
-      wantQuit = false;
-      state = STATE.TITLE; titleBlink = 0;
-      stopBGM(); setBossBGM(false);
-    }
+    else if (state === STATE.PAUSE) { wantQuit = true; }
   });
   let wantQuit = false;
 
@@ -409,11 +408,11 @@
     const bassArr = BGM.boss ? BGM.bossBass : BGM.bassNotes;
     const leadArr = BGM.boss ? BGM.bossLead : BGM.leadNotes;
     if (t >= BGM.bassNext) {
-      bgmTone(bassArr[BGM.bassIdx % bassArr.length], 0.22, 'triangle', 0.05);
+      bgmTone(bassArr[BGM.bassIdx % bassArr.length], 0.22, 'triangle', 0.025);
       BGM.bassIdx++; BGM.bassNext = t + 0.25;
     }
     if (t >= BGM.leadNext) {
-      bgmTone(leadArr[BGM.leadIdx % leadArr.length], 0.11, 'square', 0.025);
+      bgmTone(leadArr[BGM.leadIdx % leadArr.length], 0.11, 'square', 0.012);
       BGM.leadIdx++; BGM.leadNext = t + 0.125;
     }
   }
@@ -1160,11 +1159,39 @@
     }
     if (state === STATE.PAUSE) {
       if (pressed.KeyP || pressed.Escape) { state = STATE.PLAY; wantQuit = false; }
-      // Q key quits to title
+      // Q key quits to title (desktop shortcut)
       if (pressed.KeyQ) {
         wantQuit = false;
         state = STATE.TITLE; titleBlink = 0;
         stopBGM(); setBossBGM(false);
+        clearGameTimeouts();
+      }
+      // Touch handling for the quit-confirm dialog
+      if (pressed.Touch) {
+        const fx = touch.fingerX, fy = touch.fingerY;
+        if (wantQuit) {
+          // YES button: 30..118, 130..156   NO button: 138..226, 130..156
+          if (fy >= 130 && fy <= 156) {
+            if (fx >= 30 && fx <= 118) {
+              // YES -> title
+              wantQuit = false;
+              state = STATE.TITLE; titleBlink = 0;
+              stopBGM(); setBossBGM(false);
+              clearGameTimeouts();
+              pressed.Touch = false;
+            } else if (fx >= 138 && fx <= 226) {
+              // NO -> dismiss dialog (stay paused)
+              wantQuit = false;
+              pressed.Touch = false;
+            }
+          }
+        } else {
+          // No dialog -> tap on RESUME area resumes
+          if (fy >= 100 && fy <= 130) {
+            state = STATE.PLAY;
+            pressed.Touch = false;
+          }
+        }
       }
       if (pressed.KeyM) muted = !muted;
       return;
@@ -2038,17 +2065,40 @@
   }
 
   function drawPauseOverlay() {
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
     ctx.fillRect(0, 0, W, H);
-    drawText('PAUSE', W/2, 80, '#ffffff', 16, 'center');
-    drawText(isTouch ? 'TAP ▶ TO RESUME' : 'P / ESC : RESUME', W/2, 112, '#80c0ff', 7, 'center');
-    // Quit zone
-    ctx.fillStyle = 'rgba(180,30,40,0.2)';
-    ctx.fillRect(W/2 - 54, 130, 108, 22);
-    ctx.fillStyle = '#ff6060';
-    ctx.fillRect(W/2 - 54, 130, 108, 1);
-    ctx.fillRect(W/2 - 54, 151, 108, 1);
-    drawText(isTouch ? 'TAP ← TO QUIT' : 'Q : QUIT TO TITLE', W/2, 136, '#ff8080', 6, 'center');
+
+    if (wantQuit) {
+      // ----- QUIT CONFIRM DIALOG -----
+      drawText('QUIT TO TITLE?', W/2, 70, '#ffffff', 12, 'center');
+      drawText('PROGRESS WILL BE LOST', W/2, 96, '#ff8080', 6, 'center');
+
+      // YES button (left, red)
+      ctx.fillStyle = '#8a1020';
+      ctx.fillRect(30, 130, 88, 26);
+      ctx.fillStyle = '#ff6060';
+      ctx.fillRect(30, 130, 88, 1);
+      ctx.fillRect(30, 155, 88, 1);
+      ctx.fillRect(30, 130, 1, 26);
+      ctx.fillRect(117, 130, 1, 26);
+      drawText('YES', 30 + 44, 138, '#ffffff', 10, 'center');
+
+      // NO button (right, blue)
+      ctx.fillStyle = '#1a3a8a';
+      ctx.fillRect(138, 130, 88, 26);
+      ctx.fillStyle = '#80c0ff';
+      ctx.fillRect(138, 130, 88, 1);
+      ctx.fillRect(138, 155, 88, 1);
+      ctx.fillRect(138, 130, 1, 26);
+      ctx.fillRect(225, 130, 1, 26);
+      drawText('NO', 138 + 44, 138, '#ffffff', 10, 'center');
+
+      drawText(isTouch ? 'TAP TO CHOOSE' : 'Q : YES   ESC : NO', W/2, 175, '#80c0ff', 6, 'center');
+    } else {
+      // ----- NORMAL PAUSE -----
+      drawText('PAUSE', W/2, 80, '#ffffff', 16, 'center');
+      drawText(isTouch ? 'TAP HERE TO RESUME' : 'P / ESC : RESUME', W/2, 112, '#80c0ff', 7, 'center');
+    }
   }
 
   function drawBanner() {
@@ -2200,6 +2250,7 @@
   loop();
 })();
 </script>
+
 <script>
   // PWA service worker registration.
   // Skips environments where SW can't run (file://, blob:, embedded webviews
@@ -2216,5 +2267,6 @@
     });
   }
 </script>
+
 </body>
 </html>
