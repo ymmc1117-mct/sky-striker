@@ -1,34 +1,2274 @@
-{
-  "name": "Sky Striker",
-  "short_name": "SkyStriker",
-  "description": "Retro SNES-style vertical shooter. Play offline.",
-  "start_url": ".",
-  "scope": ".",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
-  "orientation": "any",
-  "background_color": "#000000",
-  "theme_color": "#0a1030",
-  "lang": "ja",
-  "categories": ["games", "entertainment"],
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1030">
+<meta name="description" content="Retro SNES-style vertical shooter. Play offline as a PWA.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>SKY STRIKER</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  /* Fallback so it stays legible if the font fails offline first-load */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Press Start 2P', ui-monospace, 'Courier New', monospace; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+    color: #e8e8f0;
+    touch-action: none;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    position: fixed;
+    inset: 0;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #000;
+    box-shadow: 0 0 80px rgba(80,180,255,.08);
+  }
+  .scanlines, .vignette {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .scanlines {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.18) 3px,
+      rgba(0,0,0,.18) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+  .vignette {
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+  }
+
+/* Floating UI buttons (touch + mouse both supported) */
+.ui-btn {
+position: fixed;
+z-index: 10;
+background: rgba(20,20,30,.55);
+border: 2px solid rgba(255,216,74,.5);
+color: #ffd84a;
+font-family: ‘Press Start 2P’, monospace;
+font-size: 9px;
+border-radius: 12px;
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+cursor: pointer;
+transition: transform .08s, background .15s;
+user-select: none;
+-webkit-user-select: none;
+display: flex;
+align-items: center;
+justify-content: center;
 }
+.ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
+.ui-btn.disabled { opacity: .35; pointer-events: none; }
+
+#btn-bomb {
+left: max(20px, env(safe-area-inset-left, 20px));
+bottom: max(30px, env(safe-area-inset-bottom, 30px));
+width: 78px; height: 78px;
+border-color: #ff8040;
+color: #ff8040;
+font-size: 11px;
+box-shadow: 0 0 20px rgba(255,128,64,.3);
+}
+#btn-bomb .count {
+position: absolute;
+bottom: 4px;
+right: 8px;
+font-size: 8px;
+color: #fff080;
+}
+#btn-pause {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: max(14px, env(safe-area-inset-right, 14px));
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-pause { display: flex; }
+#btn-fs {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+}
+/* Mute sits to the LEFT of pause in the top-right corner */
+#btn-mute {
+top: max(14px, env(safe-area-inset-top, 14px));
+right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-mute { display: flex; }
+/* Force consistent flat SVG icons - no emoji rendering on any platform */
+.ui-btn svg {
+width: 22px; height: 22px;
+display: block;
+pointer-events: none;
+}
+
+/* Hide touch UI by default; shown when touch detected or on small screens */
+body:not(.touch) #btn-bomb { display: none; }
+/* Bomb button only during gameplay even on touch devices */
+body.touch #btn-bomb { display: none; }
+body.touch.in-game #btn-bomb { display: flex; }
+body.touch #help-desktop { display: none; }
+body:not(.touch) #help-mobile { display: none; }
+/* Fullscreen button only useful on desktop */
+body.touch #btn-fs { display: none; }
+/* Quit button: only visible during gameplay (not title) */
+#btn-quit {
+top: max(14px, env(safe-area-inset-top, 14px));
+left: max(14px, env(safe-area-inset-left, 14px));
+width: 42px; height: 42px;
+display: none;
+}
+body.in-game #btn-quit { display: flex; }
+
+#help-desktop, #help-mobile {
+position: fixed;
+bottom: 12px;
+left: 50%;
+transform: translateX(-50%);
+color: #6080a0;
+font-size: 8px;
+letter-spacing: 1px;
+pointer-events: none;
+z-index: 4;
+text-align: center;
+line-height: 1.6;
+text-shadow: 0 1px 0 #000;
+}
+#help-desktop b { color: #ffd84a; }
+</style>
+
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="256" height="224"></canvas>
+  </div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <button id="btn-fs" class="ui-btn" aria-label="fullscreen" title="Fullscreen">
+    <svg id="icon-fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+      <path d="M4 9 V4 H9"/><path d="M20 9 V4 H15"/><path d="M4 15 V20 H9"/><path d="M20 15 V20 H15"/>
+    </svg>
+    <svg id="icon-fs-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter" style="display:none">
+      <path d="M9 4 V9 H4"/><path d="M15 4 V9 H20"/><path d="M9 20 V15 H4"/><path d="M15 20 V15 H20"/>
+    </svg>
+  </button>
+  <!-- Quit button: shown during gameplay (in-game class on body) -->
+  <button id="btn-quit" class="ui-btn" aria-label="quit" title="Quit to title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
+      <path d="M10 19 L3 12 L10 5"/><path d="M3 12 H15"/><path d="M15 5 H21 V19 H15"/>
+    </svg>
+  </button>
+  <button id="btn-mute" class="ui-btn" aria-label="mute" title="Mute">
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="square">
+      <path d="M4 9 H8 L13 5 V19 L8 15 H4 Z" fill="currentColor" stroke="none"/>
+      <g id="icon-waves"><path d="M16 9 V15" fill="none"/><path d="M19 7 V17" fill="none"/></g>
+      <g id="icon-x" style="display:none"><path d="M16 8 L21 13" fill="none"/><path d="M21 8 L16 13" fill="none"/></g>
+    </svg>
+  </button>
+  <button id="btn-pause" class="ui-btn" aria-label="pause" title="Pause">
+    <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>
+    </svg>
+    <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+      <path d="M7 4 L20 12 L7 20 Z"/>
+    </svg>
+  </button>
+  <button id="btn-bomb" class="ui-btn" aria-label="bomb">BOMB<span class="count" id="bomb-count">3</span></button>
+
+  <div id="help-desktop"><b>← → ↑ ↓</b> / WASD MOVE &nbsp; <b>Z</b> SHOOT &nbsp; <b>X</b> BOMB &nbsp; <b>P</b> PAUSE</div>
+  <div id="help-mobile">DRAG TO MOVE &nbsp; AUTO-FIRE</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('game');
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const W = 256, H = 224;
+
+  // ---------- DEVICE / LAYOUT ----------
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isTouch) document.body.classList.add('touch');
+
+  function resizeCanvas() {
+    const sw = window.innerWidth;
+    const sh = window.innerHeight;
+    const fitScale = Math.min(sw / W, sh / H);
+    const cw = Math.floor(W * fitScale);
+    const ch = Math.floor(H * fitScale);
+
+    // Set the canvas's INTERNAL resolution to match the on-screen physical
+    // pixel size. This avoids Safari resampling 256x224 -> ~750px every frame
+    // (which was the iPhone slowdown). We scale the drawing context so all
+    // game code can keep using 256x224 logical coordinates.
+    const dpr = window.devicePixelRatio || 1;
+    cv.width  = Math.floor(cw * dpr);
+    cv.height = Math.floor(ch * dpr);
+    cv.style.width  = cw + 'px';
+    cv.style.height = ch + 'px';
+    // The combined scale from logical (256x224) to physical pixels:
+    const drawScale = (cw * dpr) / W;
+    ctx.setTransform(drawScale, 0, 0, drawScale, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+
+    cv._scale = fitScale;          // CSS px per logical px (for touch coords)
+    cv._offX = (sw - cw) / 2;
+    cv._offY = (sh - ch) / 2;
+  }
+  resizeCanvas();
+  addEventListener('resize', resizeCanvas);
+  addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+
+  // ---------- INPUT ----------
+  const keys = {}, pressed = {};
+  addEventListener('keydown', e => {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+    if (!keys[e.code]) pressed[e.code] = true;
+    keys[e.code] = true;
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // Touch / pointer state
+  const touch = {
+    active: false,
+    x: 0, y: 0,        // canvas coords (current target for the plane)
+    fingerY: 0,        // raw finger y (canvas coords)
+    offsetY: 25,       // plane drawn this many px above finger (halved from 50)
+  };
+
+  function clientToCanvas(cx, cy) {
+    const rect = cv.getBoundingClientRect();
+    const px = (cx - rect.left) / rect.width  * W;
+    const py = (cy - rect.top)  / rect.height * H;
+    return { x: px, y: py };
+  }
+
+  function handlePointerDown(e) {
+    e.preventDefault();
+    const t = e.touches ? e.touches[0] : e;
+    if (!t) return;
+    const p = clientToCanvas(t.clientX, t.clientY);
+    touch.active = true;
+    touch.fingerY = p.y;
+    touch.fingerX = p.x;
+    touch.x = p.x;
+    touch.y = Math.max(16, p.y - touch.offsetY);
+    // tap on title/over screens to start
+    pressed.Touch = true;
+  }
+  function handlePointerMove(e) {
+    if (!touch.active) return;
+    e.preventDefault();
+    const t = e.touches ? e.touches[0] : e;
+    if (!t) return;
+    const p = clientToCanvas(t.clientX, t.clientY);
+    touch.fingerY = p.y;
+    touch.x = p.x;
+    touch.y = Math.max(16, p.y - touch.offsetY);
+  }
+  function handlePointerUp(e) {
+    e.preventDefault();
+    touch.active = false;
+  }
+
+  cv.addEventListener('touchstart', handlePointerDown, {passive:false});
+  cv.addEventListener('touchmove',  handlePointerMove, {passive:false});
+  cv.addEventListener('touchend',   handlePointerUp,   {passive:false});
+  cv.addEventListener('touchcancel',handlePointerUp,   {passive:false});
+  // also support mouse drag for desktop (in addition to keys)
+  let mouseDown = false;
+  cv.addEventListener('mousedown', e => { mouseDown = true; handlePointerDown(e); });
+  cv.addEventListener('mousemove', e => { if (mouseDown) handlePointerMove(e); });
+  addEventListener('mouseup', e => { if (mouseDown) { mouseDown = false; handlePointerUp(e); } });
+
+  // ---------- UI BUTTONS ----------
+  const btnBomb  = document.getElementById('btn-bomb');
+  const btnPause = document.getElementById('btn-pause');
+  const btnFs    = document.getElementById('btn-fs');
+  const btnMute  = document.getElementById('btn-mute');
+  const btnQuit  = document.getElementById('btn-quit');
+  const bombCountEl = document.getElementById('bomb-count');
+
+  // prevent buttons from triggering canvas touch handlers
+  [btnBomb, btnPause, btnFs, btnMute, btnQuit].filter(Boolean).forEach(b => {
+    b.addEventListener('touchstart', e => e.stopPropagation());
+    b.addEventListener('touchend',   e => e.stopPropagation());
+  });
+
+  let wantBomb = false;
+  btnBomb.addEventListener('click', () => { wantBomb = true; });
+
+  btnPause.addEventListener('click', () => {
+    if (state === STATE.PLAY) state = STATE.PAUSE;
+    else if (state === STATE.PAUSE) state = STATE.PLAY;
+  });
+
+  if (btnQuit) btnQuit.addEventListener('click', () => {
+    // Always open the confirmation dialog (paused state with wantQuit=true).
+    // Quitting requires explicit YES on the on-canvas dialog.
+    if (state === STATE.PLAY) { state = STATE.PAUSE; wantQuit = true; }
+    else if (state === STATE.PAUSE) { wantQuit = true; }
+  });
+  let wantQuit = false;
+
+  btnFs.addEventListener('click', async () => {
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+      }
+    } catch(e){}
+  });
+
+  btnMute.addEventListener('click', () => { muted = !muted; });
+
+  function updateBombUI() {
+    if (bombCountEl) bombCountEl.textContent = String(player.bombs);
+    if (player.bombs <= 0) btnBomb.classList.add('disabled');
+    else btnBomb.classList.remove('disabled');
+  }
+
+  // ---------- AUDIO ----------
+  let actx, muted = false;
+  function audio() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+  function beep(freq, dur, type='square', vol=.08, slide=0) {
+    if (muted) return;
+    try {
+      const a = audio(), o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.value = freq;
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq+slide), a.currentTime + dur);
+      g.gain.value = vol;
+      g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+      o.connect(g); g.connect(a.destination);
+      o.start(); o.stop(a.currentTime + dur);
+    } catch(e){}
+  }
+  function noise(dur, vol=.1) {
+    if (muted) return;
+    try {
+      const a = audio();
+      const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+      const s = a.createBufferSource(); s.buffer = buf;
+      const g = a.createGain(); g.gain.value = vol;
+      g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+      s.connect(g); g.connect(a.destination);
+      s.start();
+    } catch(e){}
+  }
+  const sfx = {
+    shoot: () => beep(880, .06, 'square', .035, -300),
+    hit:   () => beep(220, .07, 'square', .05, -100),
+    boom:  () => { noise(.22, .1); beep(110, .18, 'sawtooth', .06, -60); },
+    bigboom: () => { noise(.5, .18); beep(80, .4, 'sawtooth', .09, -40); beep(140, .3, 'square', .06, -80); },
+    power: () => { beep(660,.07,'square',.05); setTimeout(()=>beep(990,.09,'square',.05),70); setTimeout(()=>beep(1320,.1,'square',.05),140); },
+    death: () => { noise(.5,.13); beep(220,.5,'sawtooth',.08,-180); },
+    bomb:  () => { noise(.6,.18); beep(80,.5,'sawtooth',.09,-40); },
+    warn:  () => { beep(440,.1,'square',.06); setTimeout(()=>beep(440,.1,'square',.06),180); },
+    stage: () => { beep(523,.1,'square',.05); setTimeout(()=>beep(659,.1,'square',.05),100); setTimeout(()=>beep(784,.15,'square',.05),200); },
+  };
+
+  const BGM = {
+    bassNotes: [220, 220, 165, 165, 196, 196, 147, 147],
+    leadNotes: [440, 523, 659, 587, 523, 659, 784, 659, 587, 523, 494, 523, 587, 659, 587, 523],
+    bossLead: [311, 415, 466, 415, 311, 415, 466, 622, 587, 466, 415, 311, 415, 466, 622, 466],
+    bossBass: [155, 155, 116, 116, 138, 138, 104, 104],
+    bassIdx: 0, leadIdx: 0, bassNext: 0, leadNext: 0,
+    boss: false, enabled: false,
+  };
+  function tickBGM() {
+    if (muted || !BGM.enabled || !actx) return;
+    const t = actx.currentTime;
+    const bassArr = BGM.boss ? BGM.bossBass : BGM.bassNotes;
+    const leadArr = BGM.boss ? BGM.bossLead : BGM.leadNotes;
+    if (t >= BGM.bassNext) {
+      bgmTone(bassArr[BGM.bassIdx % bassArr.length], 0.22, 'triangle', 0.025);
+      BGM.bassIdx++; BGM.bassNext = t + 0.25;
+    }
+    if (t >= BGM.leadNext) {
+      bgmTone(leadArr[BGM.leadIdx % leadArr.length], 0.11, 'square', 0.012);
+      BGM.leadIdx++; BGM.leadNext = t + 0.125;
+    }
+  }
+  function bgmTone(freq, dur, type, vol) {
+    try {
+      const a = audio(), o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(vol, a.currentTime + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+      o.connect(g); g.connect(a.destination);
+      o.start(); o.stop(a.currentTime + dur);
+    } catch(e){}
+  }
+  const startBGM = () => { BGM.enabled = true; BGM.bassNext = 0; BGM.leadNext = 0; };
+  const stopBGM  = () => { BGM.enabled = false; };
+  const setBossBGM = b => { BGM.boss = b; };
+
+  // ---------- SPRITES ----------
+  const PAL = {
+    A:'#1a3a8a', B:'#3870e0', C:'#5ca8ff', D:'#a8d8ff',
+    E:'#ffd84a', F:'#ff8800', G:'#ffffff', H:'#101820',
+    R:'#8a1020', S:'#d83040', T:'#ff6878', U:'#ffb0b8',
+    K:'#202028', L:'#404858',
+    g:'#205028', h:'#40a040', i:'#80e060',
+    p:'#5a2080', q:'#9040c0', r:'#c878f0',
+    Y:'#fff080', Z:'#ffe020', W:'#80ffe0', X:'#20c0a0',
+    a:'#3a0820', b:'#702030', c:'#c04050', d:'#ff7088',
+    e:'#202028', f:'#606878', j:'#a0a8b8',
+  };
+
+  function makeSprite(rows) {
+    const h = rows.length, w = rows[0].length;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    const img = x.createImageData(w, h);
+    for (let y=0; y<h; y++) for (let xi=0; xi<w; xi++) {
+      const ch = rows[y][xi], i = (y*w + xi) * 4;
+      if (ch === ' ' || !PAL[ch]) { img.data[i+3] = 0; continue; }
+      const col = PAL[ch];
+      img.data[i]   = parseInt(col.slice(1,3),16);
+      img.data[i+1] = parseInt(col.slice(3,5),16);
+      img.data[i+2] = parseInt(col.slice(5,7),16);
+      img.data[i+3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    return c;
+  }
+
+  const SPR_PLAYER = makeSprite([
+    '       GG       ','       GG       ','      GCCG      ','      GCCG      ',
+    '     DCBBCD     ','   GGDCBBCDGG   ','  GCCDBAABDCCG  ',' GCBBDBAABDBBCG ',
+    'GCBBBBBAABBBBBCG','GBBBAAABBAAABBBG','GGAAA  AA  AAAGG',' G HH  AA  HH G ',
+    '       FF       ','      EFFE      ','       FF       ','       EE       ',
+  ]);
+  const SPR_PLAYER_L = makeSprite([
+    '       GG       ','      GCG       ','     GCCCG      ','    DCCBCG      ',
+    '    DCBBCD      ','  GGDCBBCDGG    ',' GCCDBAABDCCG   ','GCBBDBAABDBBCG  ',
+    'GCBBBBAABBBBBCG ','GBBBAAABBAAABBBG','GAAA  AA  AAAGG ','G HH   AA  HH G ',
+    '       FF       ','      EFFE      ','       FF       ','       EE       ',
+  ]);
+  const SPR_PLAYER_R = makeSprite([
+    '       GG       ','       GCG      ','      GCCCG     ','      GCBCCD    ',
+    '      DCBBCD    ','    GGDCBBCDGG  ','   GCCDBAABDCCG ','  GCBBDBAABDBBCG',
+    ' GCBBBBAABBBBBCG','GBBBAAABBAAABBBG',' GAAA  AA  AAAGG',' G HH  AA   HH G',
+    '       FF       ','      EFFE      ','       FF       ','       EE       ',
+  ]);
+
+  const SPR_ENEMY_A = makeSprite([
+    '   KSSSSK   ','  KSTTTTSK  ','  STUTTUTS  ',' RSTTTTTTSR ',
+    'RRSTTYYTTSRR','RRSTTYYTTSRR','RSSSSTTSSSSR',' RKLLLLLLKR ',
+    '  KK    KK  ','   K    K   ','   FF  FF   ','   E    E   ',
+  ]);
+  const SPR_ENEMY_B = makeSprite([
+    '  hhhhhhhhhh  ',' higgggggggih ','hhgiiiiiiiighh','hgiYYiiiiYYigh',
+    'hggiiiiiiiiggh',' hgggggggggh  ','  hhhhhhhhh   ','  K hhhhhh K  ',
+    '  K  hhhh  K  ','   F  hh  F   ','   F      F   ','   E      E   ',
+  ]);
+  const SPR_ENEMY_C = makeSprite([
+    '    pppppp    ','   pqqqqqqp   ','  pqrrrrrrqp  ',' pqrqqrrqqrqp ',
+    'pqrqqqrrqqqrqp','pqrYqqrrqqYrqp','pqqqqrYYrqqqqp',' pqqrYrrYrqqp ',
+    '  pqrrrrrrqp  ','   pqqqqqqp   ','   K pppp K   ','   FF    FF   ',
+    '    F    F    ','    E    E    ',
+  ]);
+
+  const SPR_BOSS_SQUID = makeSprite([
+    '                                ',
+    '                                ',
+    '              XXXX              ',
+    '             XWXXWX             ',
+    '            XWWWWWWX            ',
+    '           XWWWWWWWWX           ',
+    '          XWWWWWWWWWWX          ',
+    '         XWWWWWWWWWWWWX         ',
+    '        XWWWWWWWWWWWWWWX        ',
+    '       XWWWWWWWWWWWWWWWWX       ',
+    '      XWWWWWWWWWWWWWWWWWWX      ',
+    '     XWWiiiWWWWWWWWWWiiiWWX     ',
+    '    XWWiiiiiWWWWWWWWiiiiiWWX    ',
+    '   XWKKGGWWWWWWWWWWWWWWGGKKWX   ',
+    '   XWKGGGKWWWWWWWWWWWWKGGGKWX   ',
+    '   XWKGGGKWWWWWWWWWWWWKGGGKWX   ',
+    '    XWKKKWWWWWWWWWWWWWWKKKWX    ',
+    '     XWWWWWWWWWWWWWWWWWWWWX     ',
+    '      XWWWWWWWWWWWWWWWWWWX      ',
+    '       XWTTTTTTTTTTTTTTWX       ',
+    '        XbbbbbKKKKbbbbbX        ',
+    '         XbbKKbbbbKKbbX         ',
+    '          XbbbbXXbbbbX          ',
+    '          XX  XXXX  XX          ',
+    '        XXX    XX    XXX        ',
+    '       X  X  X X  X  X  X       ',
+    '      X X X  X  X  X X X        ',
+    '     X  X X X    X X X  X       ',
+    '    X X  X  X    X  X  X X      ',
+    '                                ',
+  ]);
+
+  const SPR_BOSS_UFO = makeSprite([
+    '                                ',
+    '                                ',
+    '                                ',
+    '              cKKc              ',
+    '              cKKc              ',
+    '             KjKKjK             ',
+    '            KjjKKjjK            ',
+    '           KjjGKKGjjK           ',
+    '          KjGGGKKGGGjK          ',
+    '         KjjGDDKKDDGjjK         ',
+    '        KjDDDDDKKDDDDDjK        ',
+    '       KjDDhhhhKKhhhhDDjK       ',
+    '      KjDDhihhhhhhhhihDDjK      ',
+    '      KjDhhKhhhhhhhhKhhDjK      ',
+    '      KjDhhhhhhhhhhhhhhDjK      ',
+    '      KjDDhhhhhhhhhhhhDDjK      ',
+    '       KjDDDDDDDDDDDDDDjK       ',
+    '      KKjjjjjjjjjjjjjjjjKK      ',
+    '    KKjjjjjjjjjjjjjjjjjjjjKK    ',
+    '  KKjjffffffffffffffffffffjjKK  ',
+    ' KjffEYYEffEYYEffEYYEffEYYEffjK ',
+    'KfffYZZYffYZZYffffYZZYffYZZYfffK',
+    'KKffffffffffffffffffffffffffffKK',
+    '  KKffEEEffffffEEffffffEEEffKK  ',
+    '    KKffYZZYffffffffYZZYffKK    ',
+    '      KKfFFFFFffffFFFFFfKK      ',
+    '        KKEEEEEffEEEEEKK        ',
+    '          KYYYYKKYYYYK          ',
+    '            KEEKKEEK            ',
+    '              KKKK              ',
+  ]);
+
+  const SPR_BOSS_ONI = makeSprite([
+    '                                ',
+    '   ff                      ff   ',
+    '   fjf                    fjf   ',
+    '   fjjf                  fjjf   ',
+    '    fjjf                fjjf    ',
+    '     fjjf  ff      ff  fjjf     ',
+    '      fjjf fjf    fjf fjjf      ',
+    '       fjjffjjf  fjjffjjf       ',
+    '      KKKKKpppppppppKKKKKK      ',
+    '     KppppqqqqqqqqqqqqqqpppK    ',
+    '    KpqqqqqqqqqqqqqqqqqqqqqpK   ',
+    '   KpqqqrrrrrrrrrrrrrrrrrrqqpK  ',
+    '   KpqqrrrrrTTTTTTrrrrrrrrqqpK  ',
+    '   KpqrrrrrrrrrrrrrrrrrrrrrqpK  ',
+    '   KpqrrKKKKKrrrrrrrrKKKKKrrqpK ',
+    '   KpqrKKYYYYKrrrrrrKKYYYYKrqpK ',
+    '   KpqrKYYZGZYKrrrrKYYZGZYKKqpK ',
+    '   KpqrKKYYYYKrrrrrKKYYYYKrrqpK ',
+    '   KpqrrKKKKKrrrrrrrKKKKKrrqpK  ',
+    '   KpqrrrrrrrTrTTrrrrrrrrqqpK   ',
+    '    KppqqrrrrrrrrrrrrrrqqppK    ',
+    '     KppqqqGGGGGGGGGGGGGqqqpK   ',
+    '     KpqKGKGKGKGKGKGKGKGKGqpK   ',
+    '     KpqKKKKKKKKKKKKKKKKKKKqpK  ',
+    '     KpqKKSSSSSSSSSSSSSSSSKqpK  ',
+    '     KpqKKSSTTTTTTTTTTSSSSKqpK  ',
+    '     KpqKKKKKKKKKKKKKKKKKKKqpK  ',
+    '     KpqKGKGKGKGKGKGKGKGKGqpK   ',
+    '      KppqGGGGGGGGGGGGGGGppK    ',
+    '       KppppqqqqqqqqqqqpppK     ',
+  ]);
+
+  const SPR_BOSS_EYE = makeSprite([
+    ' b   b    b b    b b    b   b   ',
+    ' cb  cb  cb  cb cb  cb  cb  b   ',
+    '  ccb ccb  bcb bcb  ccb ccb     ',
+    '   bccbccbbcb bcbbbccbbcccb     ',
+    '    bbccccccccccccccccccbb      ',
+    '   bccddddddddddddddddddccb     ',
+    '  bcdddddTTTTTTTTTTTTddddddcb   ',
+    ' bcdddTTTTGGGGGGGGGGGGTTTdddcb  ',
+    ' bcdTTGGGGGSSSSSSSSSSGGGGGTTdcb ',
+    'bcdTTGGGSSSSTTTTTTTTSSSSGGGTTdcb',
+    'bcdTGGSSSTTYYYYYYYYYTTTSSSGGTdcb',
+    'bcdTGSSTTYYYYKKKKKKYYYYTTSSGTdcb',
+    'bcdTGSTTYYKKKbbbKKKKYYTTSSGTdcb ',
+    'bcdTGSTTYKKbbbbbbbKKKYTTSSGTdcb ',
+    'bcdTGSTTYKKbGGbbbKKKYTTSSGTdcb  ',
+    'bcdTGSTTYYKKbbbKKKKYYTTSSGTdcb  ',
+    'bcdTGSSTTYYYYKKKKKKYYYYSSGGTdcb ',
+    'bcdTGGSSSTTYYYYYYYYYTTTSSSGGTdcb',
+    'bcdTTGGGSSSSTTTTTTTTSSSSGGGTTdcb',
+    ' bcdTTGGGGGSSSSSSSSSSGGGGGTTdcb ',
+    ' bcdddTTTTGGGGGGGGGGGGTTTdddcb  ',
+    '  bcdddddddTTTTTTTTTddddddcb    ',
+    '   bccddddddddddddddddddccb     ',
+    '    bbccbbbcccbcccbbbbcccbb     ',
+    '      bcb  bcccccb  bcb         ',
+    '     bccb   bccb   bcccb        ',
+    '    bcccb    bb    bccccb       ',
+    '   bccccb          bcccccb      ',
+    '  bccccb            bccccb      ',
+    '                                ',
+  ]);
+
+  const SPR_BOSS_LORD = makeSprite([
+    '                                ',
+    '   f         f  f         f     ',
+    '   fj       fj  fj       fj     ',
+    '   fjj     fjj  fjj     fjj     ',
+    '   fjjj   fjjj  fjjj   fjjj     ',
+    '   fjjj   fjjj  fjjj   fjjj     ',
+    '    fjjj  fjjj  fjjj  fjjj      ',
+    '     fjjjffjjj  fjjjffjjj       ',
+    '      bjjjjjjjjjjjjjjjjjjb      ',
+    '     bRRRRRRRRRRRRRRRRRRRRb     ',
+    '    bRSSSSSSSSSSSSSSSSSSSSSb    ',
+    '   bRSSTTTTTTTTTTTTTTTTTTTSb    ',
+    '   bRSTTKKKEEEKKKKEEEKKKTTSb    ',
+    '   bRSTKEYYZZYYEEYYZZYYEKTSb    ',
+    '   bRSTKEYZGZYYEEYYZGZYEKTSb    ',
+    '   bRSTKEYZZYYYEEYYYZZYEKTSb    ',
+    '   bRSTKKEEEKKKKKKKKEEEKKTSb    ',
+    '    bRSSTTTKKKKKKKKKKTTTSSb     ',
+    '     bRSSTTTTKKKKKKTTTTSSb      ',
+    '      bRSSTGGGGGGGGGGGGSRb      ',
+    '      bRSGKGKGKGKGKGKGKSRb      ',
+    '      bRSKKKKKKKKKKKKKKSRb      ',
+    '      bRSKKEEEEEEEEEEEEKSb      ',
+    '      bRSKKEFFFFFFFFFFEKSb      ',
+    '      bRSKKEFFFFFFFFFFEKSb      ',
+    '      bRSKKEEEEEEEEEEEEKSb      ',
+    '      bRSGKGKGKGKGKGKGKSRb      ',
+    '      bRSSGGGGGGGGGGGGSSb       ',
+    '       bRRSSSSSSSSSSSRb         ',
+    '         bbRRRRRRRRbb           ',
+  ]);
+
+  const BOSS_TYPES = [
+    { name: 'SQUID', label: 'CALAMARI',     spr: SPR_BOSS_SQUID },
+    { name: 'UFO',   label: 'MOTHERSHIP',   spr: SPR_BOSS_UFO   },
+    { name: 'ONI',   label: 'ONI',          spr: SPR_BOSS_ONI   },
+    { name: 'EYE',   label: 'OVERSEER',     spr: SPR_BOSS_EYE   },
+    { name: 'LORD',  label: 'DEMON LORD',   spr: SPR_BOSS_LORD  },
+  ];
+  const FINAL_STAGE = BOSS_TYPES.length;
+
+  const SPR_BULLET_P = makeSprite([' Y ','YZY','YZY','YZY',' Y ']);
+  const SPR_BULLET_E = makeSprite([' R ','TST','TST',' R ']);
+  const SPR_BULLET_BIG = makeSprite([' RTR ','TSSST','TSGST','TSSST',' RTR ']);
+  const SPR_POWER = makeSprite([
+    '  WWWW  ',' WXXXXW ','WXWWWWXW','WXWXXWXW',
+    'WXWWWWXW','WXXXXXXW',' WXXXXW ','  WWWW  ',
+  ]);
+  const SPR_BOMB_ITEM = makeSprite([
+    '  EEEE  ',' EFFFFE ','EFEEEEFE','EFEFFEFE',
+    'EFEFFEFE','EFEEEEFE',' EFFFFE ','  EEEE  ',
+  ]);
+  // Pixel heart for extra life
+  const SPR_LIFE = makeSprite([
+    ' KK  KK ','KSSKKSSK','KSGSSGSK','KSSSSSSK',
+    'KSSSSSSK',' KSSSSK ','  KSSK  ','   KK   ',
+  ]);
+
+  // ---------- STATE ----------
+  const STATE = { TITLE:0, PLAY:1, OVER:2, PAUSE:3, NAME_ENTRY:4, SCORES:5, BESTIARY:6 };
+
+  // ---------- HIGH SCORES (localStorage, top 10) ----------
+  const HS_KEY = 'sky-striker-scores-v1';
+  const HS_MAX = 10;
+  const NAME_LEN = 12;
+  const NAME_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-! ';
+  // On-screen keyboard grid: 8 cols x 5 rows = 40 cells (last row has DEL/OK)
+  const KB_COLS = 8;
+  const KB_CHARS = [
+    'A','B','C','D','E','F','G','H',
+    'I','J','K','L','M','N','O','P',
+    'Q','R','S','T','U','V','W','X',
+    'Y','Z','0','1','2','3','4','5',
+    '6','7','8','9','.','-','DEL','OK',
+  ];
+  // Layout (canvas pixel coords; computed once)
+  const NE = {
+    nameRowY: 60,
+    charW: 12,
+    nameBaseX: 0,        // computed below
+    kbX: 16,             // left edge of keyboard
+    kbY: 96,
+    kbCellW: 28,         // 8 * 28 = 224, plus 16 margin each side
+    kbCellH: 18,
+  };
+  NE.nameBaseX = (256 - NAME_LEN * NE.charW) / 2 + NE.charW/2;
+
+  function hitTestKeyboard(x, y) {
+    const c = Math.floor((x - NE.kbX) / NE.kbCellW);
+    const r = Math.floor((y - NE.kbY) / NE.kbCellH);
+    if (c < 0 || c >= KB_COLS || r < 0 || r >= 5) return null;
+    const idx = r * KB_COLS + c;
+    if (idx < 0 || idx >= KB_CHARS.length) return null;
+    return KB_CHARS[idx];
+  }
+
+  function loadScores() {
+    try {
+      const raw = localStorage.getItem(HS_KEY);
+      if (!raw) return defaultScores();
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return defaultScores();
+      return parsed
+        .filter(e => e && typeof e.score === 'number' && typeof e.name === 'string')
+        .sort((a,b) => b.score - a.score)
+        .slice(0, HS_MAX);
+    } catch (e) {
+      return defaultScores();
+    }
+  }
+  function saveScores(scores) {
+    try { localStorage.setItem(HS_KEY, JSON.stringify(scores)); } catch (e) {}
+  }
+  function defaultScores() {
+    // seed list so an empty board still looks alive
+    const seeds = ['ACE.01','PILOT2','ANT3','SKY-04','RIVAL5','BOT006','CPU.07','TRAINEE','RECRUIT','ROOKIE'];
+    return seeds.map((name, i) => ({
+      name,
+      score: (HS_MAX - i) * 5000,
+      stage: Math.max(1, Math.ceil((HS_MAX - i) / 2)),
+      loop: 0,
+      date: 0,
+    }));
+  }
+  function rankOf(score, scores) {
+    // returns 0..HS_MAX-1 if it qualifies, else -1
+    for (let i=0; i<scores.length; i++) {
+      if (score > scores[i].score) return i;
+    }
+    if (scores.length < HS_MAX) return scores.length;
+    return -1;
+  }
+  function insertScore(entry, scores) {
+    scores.push(entry);
+    scores.sort((a,b) => b.score - a.score);
+    return scores.slice(0, HS_MAX);
+  }
+
+  let highScores = loadScores();
+
+  // ---------- BESTIARY (which bosses player has defeated) ----------
+  const DEFEATED_KEY = 'sky-striker-defeated-v1';
+  function loadDefeated() {
+    try {
+      const raw = localStorage.getItem(DEFEATED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveDefeated() {
+    try { localStorage.setItem(DEFEATED_KEY, JSON.stringify(defeatedBosses)); } catch (e) {}
+  }
+  let defeatedBosses = loadDefeated();
+  let cleared = false;
+  let bestiaryIdx = 0;
+  let state = STATE.TITLE;
+  let titleBlink = 0;
+  let bannerTimer = 0, bannerText = '', bannerSub = '';
+
+  const player = {
+    x: W/2, y: H-40, vx:0, vy:0,
+    cooldown:0, power:1, lives:3, bombs:3, score:0,
+    invuln:0, dead:false, deathTimer:0,
+  };
+
+  let bullets=[], enemies=[], ebullets=[], particles=[], powerups=[], scoreFloaters=[];
+  let stars=[], clouds=[];
+  let waveTimer=0, waveCount=0, stage=1, stageWaves=0;
+  const WAVES_PER_STAGE = 5;
+  let bossWarning=0;
+  let bossLock=false;        // prevents wave spawning during warning / spawn / transition
+  let loopCount=0;           // 0=first run, 1=2nd loop, 2=3rd loop...
+  let bossesKilledThisStage=0; // tracks multi-boss stages in endless loops
+  let bossesNeededThisStage=1; // total bosses spawned this stage
+  let totalBossKills=0;        // running total across the run; every 4 → life drop
+
+  // Format stage label like "1-3", "2-1", or "FINAL".
+  function stageLabel() {
+    if (loopCount >= 2) return 'FINAL';
+    return (loopCount + 1) + '-' + stage;
+  }
+
+  // Format a saved high-score entry's stage label.
+  function entryStageLabel(e) {
+    const lp = e.loop || 0;
+    const st = e.stage || 1;
+    if (lp >= 2) return 'FINAL';
+    return (lp + 1) + '-' + st;
+  }
+  let bombFlash=0, shake=0, highScore=0;
+
+  // Track scheduled game timeouts so we can cancel them on reset / death.
+  // (Without this, a stale setTimeout from a previous run could fire during
+  // a new game and e.g. spawn a boss on stage 1-1 with no waves.)
+  const _gameTimeouts = new Set();
+  function scheduleGame(fn, ms) {
+    let id;
+    id = setTimeout(() => {
+      _gameTimeouts.delete(id);
+      fn();
+    }, ms);
+    _gameTimeouts.add(id);
+    return id;
+  }
+  function clearGameTimeouts() {
+    for (const id of _gameTimeouts) clearTimeout(id);
+    _gameTimeouts.clear();
+  }
+
+  // Name entry & scores screen state
+  const nameEntry = {
+    name: Array(NAME_LEN).fill(' '),
+    pos: 0,
+    kb: 0,            // index into KB_CHARS for keyboard nav
+    rank: -1,
+    score: 0,
+    stage: 1,
+    loop: 0,
+    blink: 0,
+  };
+  let combo=0, comboTimer=0;
+
+  for (let i=0; i<60; i++) stars.push({
+    x: Math.random()*W, y: Math.random()*H,
+    s: Math.random()*2.5 + 0.3,
+    c: Math.random() < 0.3 ? '#ffffff' : (Math.random()<0.5 ? '#a0c0ff' : '#6080c0'),
+  });
+  for (let i=0; i<5; i++) clouds.push({
+    x: Math.random()*W, y: Math.random()*H - H,
+    s: Math.random()*0.6 + 0.4,
+    type: Math.floor(Math.random()*3),
+  });
+
+  function reset() {
+    clearGameTimeouts();   // cancel any pending boss spawns / stage transitions
+                           // from a previous game so they can't leak into 1-1.
+    player.x = W/2; player.y = H-40;
+    player.cooldown=0; player.power=1; player.lives=3; player.bombs=3;
+    player.score=0; player.invuln=0; player.dead=false; player.deathTimer=0;
+    bullets=[]; enemies=[]; ebullets=[]; particles=[]; powerups=[]; scoreFloaters=[];
+    waveTimer=60; waveCount=0; stage=1; stageWaves=0;
+    bossWarning=0; bossLock=false;
+    loopCount=0; bossesKilledThisStage=0; totalBossKills=0;
+    combo=0; comboTimer=0;
+    cleared = false;
+    showBanner('STAGE 1-1', 'TAKE OFF');
+    updateBombUI();
+  }
+  function showBanner(t, s='') { bannerText=t; bannerSub=s; bannerTimer=150; sfx.stage(); }
+
+  function spawnWave() {
+    waveCount++; stageWaves++;
+    if (stageWaves > WAVES_PER_STAGE) { spawnBoss(); return; }
+    const diff = stage;
+    // Bonus zako: +1 per stage past 1, +2 per loop past 0. Capped to keep playable.
+    const bonus = Math.min(8, (stage - 1) + loopCount * 2);
+    const pat = waveCount % 6;
+    if (pat === 1) {
+      const count = 7 + bonus;
+      for (let i=0; i<count; i++) enemies.push(makeEnemy('A', 16 + i*((W-32)/Math.max(1,count-1)), -20 - Math.abs(i-(count-1)/2)*10, 0, 0.7 + diff*0.08));
+    } else if (pat === 2) {
+      const count = 6 + bonus;
+      for (let i=0; i<count; i++) enemies.push(makeEnemy('B', i%2 ? -16 : W+16, 16 + i*14, i%2 ? 1 : -1, 0.4 + diff*0.05, 'wave'));
+    } else if (pat === 3) {
+      const count = 5 + Math.ceil(bonus / 2);
+      for (let i=0; i<count; i++) {
+        const e = makeEnemy('A', 32 + i*((W-64)/Math.max(1,count-1)), -20 - i*8, 0, 0.6 + diff*0.05);
+        e.shoots = true;
+        enemies.push(e);
+      }
+    } else if (pat === 4) {
+      const heavies = 1 + Math.floor(bonus / 4);
+      for (let h=0; h<heavies; h++) {
+        const c = makeEnemy('C', 60 + h*((W-120)/Math.max(1,heavies-1) || 0) + (heavies===1 ? (W/2 - 60) : 0), -30 - h*30, 0, 0.35, 'sweep');
+        c.shoots = true; c.hp = 6 + diff;
+        enemies.push(c);
+      }
+      const escorts = 4 + bonus;
+      for (let i=0; i<escorts; i++) enemies.push(makeEnemy('A', W/2 + (i-(escorts-1)/2)*22, -50 - i*8, 0, 0.6));
+    } else if (pat === 5) {
+      const perSide = 3 + Math.ceil(bonus / 2);
+      for (let i=0; i<perSide*2; i++) {
+        const x = i < perSide ? 30 : W - 30;
+        const localI = i % perSide;
+        enemies.push(makeEnemy('A', x, -20 - localI*12, (i<perSide ? 0.6 : -0.6), 1.0 + diff*0.1));
+      }
+    } else {
+      const count = 8 + bonus;
+      for (let i=0; i<count; i++) {
+        const t = i%2 ? 'A' : 'B';
+        enemies.push(makeEnemy(t, 12 + i*((W-24)/Math.max(1,count-1)), -20 - (i%3)*15, 0, 0.55 + diff*0.05, i%3===0 ? 'wave' : null));
+      }
+    }
+  }
+
+  function makeEnemy(type, x, y, vx, vy, motion=null) {
+    const def = {
+      A: { w:12, h:12, hp:1, score:100, spr: SPR_ENEMY_A },
+      B: { w:14, h:12, hp:2, score:200, spr: SPR_ENEMY_B },
+      C: { w:14, h:14, hp:6, score:800, spr: SPR_ENEMY_C },
+    }[type];
+    return { type, x, y, vx, vy, ...def, t:0, motion, shoots:false,
+             shootCD: 60 + Math.random()*60, flash:0, isBoss:false };
+  }
+
+  // Returns how many boss enemies are currently alive
+  // Cached per-frame to avoid repeated O(N) scans of `enemies` from multiple
+  // callers (wave gate, drawBackground, updateBoss for each boss, etc.)
+  let _bossCountCache = 0;
+  function bossCount() { return _bossCountCache; }
+  function recomputeBossCount() {
+    let n = 0;
+    for (const e of enemies) if (e.isBoss && !e.dead) n++;
+    _bossCountCache = n;
+  }
+
+  // Build a single boss enemy. role 0=center, 1=left, 2=right, 3=far-left, 4=far-right
+  function makeBossEnemy(bossDef, role, totalBosses, hpMul = 1, scoreMul = 1) {
+    // Compute spawn x offsets so bosses are spaced across the screen
+    let xOffset = 0;
+    if (totalBosses === 1) xOffset = 0;
+    else if (totalBosses === 2) xOffset = (role === 0 ? -50 : 50);
+    else if (totalBosses === 3) xOffset = (role === 0 ? 0 : role === 1 ? -70 : 70);
+    else xOffset = (role - (totalBosses - 1) / 2) * 50;
+
+    // Stagger Y entry so they don't all overlap (only for 3+ bosses)
+    const yEntry = totalBosses >= 3 ? -32 - role * 18 : -32;
+    const targetY = totalBosses >= 3 ? 36 + role * 8 : 40;
+
+    const baseHp = 60 + stage * 15 + loopCount * 20;
+    const hp = Math.floor(baseHp * hpMul);
+    const baseScore = 5000 + stage * 2000 + loopCount * 1000;
+    const score = Math.floor(baseScore * scoreMul);
+
+    return {
+      type:'BOSS', bossType: bossDef.name, bossSpr: bossDef.spr,
+      x: W/2 + xOffset, y: yEntry, vx: 0, vy: 0.4,
+      w: 30, h: 28, hp, maxHp: hp, score,
+      t: role * 30,        // phase offset so movements desync
+      motion: 'boss', isBoss: true, phase: 0, shootCD: 90 + role * 20, flash: 0,
+      targetY, xCenter: W/2 + xOffset,  // stored center for sway pattern
+    };
+  }
+
+  // For loop3 (final), the three bosses are picked from BOSS_TYPES indices [4, 2, 3]
+  // = LORD (centerpiece) flanked by ONI and EYE
+  const FINAL_LOOP_BOSSES = [4, 2, 3]; // LORD, ONI, EYE -> roles 0,1,2
+
+  function spawnBoss() {
+    if (bossLock || bossCount() > 0) return;
+    bossLock = true;
+    bossesKilledThisStage = 0;
+    stageWaves = 0;
+    bossWarning = 120;
+    sfx.warn();
+
+    scheduleGame(() => {
+      if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+
+      let bossList; // array of {def, hpMul, scoreMul}
+      if (loopCount >= 2) {
+        // FINAL STAGE: 3 different fearsome bosses simultaneously
+        bossList = FINAL_LOOP_BOSSES.map((idx, i) => ({
+          def: BOSS_TYPES[idx],
+          hpMul: 1.5 + i * 0.25,   // each progressively tougher
+          scoreMul: 1.5,
+        }));
+      } else {
+        // Loop 1: 1 boss. Loop 2: 2 bosses (same stage type, simultaneous)
+        const count = loopCount + 1;
+        const bossIdx = (stage - 1) % BOSS_TYPES.length;
+        const bossDef = BOSS_TYPES[bossIdx];
+        bossList = [];
+        for (let i = 0; i < count; i++) {
+          bossList.push({
+            def: bossDef,
+            hpMul: i === 0 ? 1.0 : 1.0 + i * 0.15,
+            scoreMul: i === 0 ? 1.0 : 0.7,
+          });
+        }
+      }
+
+      const N = bossList.length;
+      bossesNeededThisStage = N;
+      bossList.forEach((b, i) => {
+        enemies.push(makeBossEnemy(b.def, i, N, b.hpMul, b.scoreMul));
+      });
+      bossLock = false;
+      setBossBGM(true);
+    }, 2000);
+  }
+
+  function update() {
+    tickBGM();
+    recomputeBossCount();
+
+    if (state === STATE.TITLE) {
+      titleBlink++;
+      for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+      // Bottom strip is split into two halves: left=scores, right=bestiary
+      const inBottom = pressed.Touch && touch.fingerY > H - 32;
+      const tappedScores   = inBottom && touch.fingerX < W/2;
+      const tappedBestiary = inBottom && touch.fingerX >= W/2;
+      if (pressed.KeyH || tappedScores) {
+        state = STATE.SCORES; titleBlink = 0;
+        pressed.Touch = false;
+      } else if (pressed.KeyB || tappedBestiary) {
+        state = STATE.BESTIARY; titleBlink = 0;
+        pressed.Touch = false;
+      } else if (pressed.Space || pressed.KeyZ || pressed.Enter || pressed.Touch) {
+        state = STATE.PLAY; reset(); startBGM(); sfx.power();
+      }
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (state === STATE.NAME_ENTRY) {
+      nameEntry.blink++;
+      for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+
+      const commit = () => {
+        const finalName = nameEntry.name.join('').replace(/\s+$/,'') || 'PILOT';
+        highScores = insertScore({
+          name: finalName,
+          score: nameEntry.score,
+          stage: nameEntry.stage,
+          loop: nameEntry.loop,
+          date: Date.now(),
+        }, highScores);
+        saveScores(highScores);
+        state = STATE.SCORES;
+        titleBlink = 0;
+      };
+      const placeChar = (ch) => {
+        if (ch === 'DEL') {
+          // delete previous char
+          if (nameEntry.pos > 0) {
+            nameEntry.pos--;
+            nameEntry.name[nameEntry.pos] = ' ';
+          } else {
+            nameEntry.name[0] = ' ';
+          }
+          return;
+        }
+        if (ch === 'OK') { commit(); return; }
+        // place at current position then advance
+        if (nameEntry.pos < NAME_LEN) {
+          nameEntry.name[nameEntry.pos] = ch;
+          nameEntry.pos = Math.min(NAME_LEN - 1, nameEntry.pos + 1);
+        }
+      };
+
+      // ----- Touch: tap a key cell -----
+      if (pressed.Touch) {
+        const fx = touch.fingerX, fy = touch.fingerY;
+        // Also tap on the name display row to select position
+        const nameRowY = NE.nameRowY, charW = NE.charW;
+        const baseX = NE.nameBaseX;
+        if (fy >= nameRowY - 8 && fy <= nameRowY + 8) {
+          for (let i=0; i<NAME_LEN; i++) {
+            const cx = baseX + i * charW;
+            if (Math.abs(fx - cx) <= charW/2) { nameEntry.pos = i; pressed.Touch = false; break; }
+          }
+        }
+        if (pressed.Touch) {
+          // Check keyboard grid
+          const cell = hitTestKeyboard(fx, fy);
+          if (cell) { placeChar(cell); pressed.Touch = false; }
+        }
+      }
+
+      // ----- Keyboard: navigate grid + direct typing -----
+      // Direct typing: any KeyA..KeyZ or Digit0..Digit9 sets that letter
+      for (const code in pressed) {
+        if (!pressed[code]) continue;
+        let ch = null;
+        if (code.startsWith('Key') && code.length === 4) ch = code[3]; // KeyA -> A
+        else if (code.startsWith('Digit')) ch = code.slice(5);
+        if (ch && KB_CHARS.includes(ch)) { placeChar(ch); pressed[code] = false; }
+      }
+      // Grid navigation with arrows (still useful as fallback)
+      if (pressed.ArrowLeft)  nameEntry.kb = Math.max(0, nameEntry.kb - 1);
+      if (pressed.ArrowRight) nameEntry.kb = Math.min(KB_CHARS.length - 1, nameEntry.kb + 1);
+      if (pressed.ArrowUp)    nameEntry.kb = Math.max(0, nameEntry.kb - KB_COLS);
+      if (pressed.ArrowDown)  nameEntry.kb = Math.min(KB_CHARS.length - 1, nameEntry.kb + KB_COLS);
+      if (pressed.Space || pressed.Enter) placeChar(KB_CHARS[nameEntry.kb]);
+      if (pressed.Backspace) placeChar('DEL');
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (state === STATE.SCORES) {
+      titleBlink++;
+      for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+      if (pressed.Space || pressed.KeyZ || pressed.Enter || pressed.Touch || pressed.Escape || pressed.KeyH) {
+        state = STATE.TITLE; titleBlink = 0;
+      }
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (state === STATE.BESTIARY) {
+      titleBlink++;
+      for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+      if (pressed.ArrowLeft || pressed.KeyA) bestiaryIdx = (bestiaryIdx - 1 + BOSS_TYPES.length) % BOSS_TYPES.length;
+      if (pressed.ArrowRight || pressed.KeyD) bestiaryIdx = (bestiaryIdx + 1) % BOSS_TYPES.length;
+      // Tap on left/right edges to navigate; tap center area to return
+      if (pressed.Touch) {
+        if (touch.fingerX < W * 0.25) bestiaryIdx = (bestiaryIdx - 1 + BOSS_TYPES.length) % BOSS_TYPES.length;
+        else if (touch.fingerX > W * 0.75) bestiaryIdx = (bestiaryIdx + 1) % BOSS_TYPES.length;
+        else { state = STATE.TITLE; titleBlink = 0; }
+        pressed.Touch = false;
+      }
+      if (pressed.Escape || pressed.KeyB || pressed.Space || pressed.KeyZ || pressed.Enter) {
+        state = STATE.TITLE; titleBlink = 0;
+      }
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (state === STATE.OVER) {
+      titleBlink++;
+      stopBGM();
+      for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+      for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.05; }
+      particles = particles.filter(p => p.life > 0);
+      if (pressed.Space || pressed.KeyZ || pressed.Enter || pressed.Touch) { state = STATE.TITLE; titleBlink = 0; }
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (state === STATE.PAUSE) {
+      if (pressed.KeyP || pressed.Escape) { state = STATE.PLAY; wantQuit = false; }
+      // Q key quits to title (desktop shortcut)
+      if (pressed.KeyQ) {
+        wantQuit = false;
+        state = STATE.TITLE; titleBlink = 0;
+        stopBGM(); setBossBGM(false);
+        clearGameTimeouts();
+      }
+      // Touch handling for the quit-confirm dialog
+      if (pressed.Touch) {
+        const fx = touch.fingerX, fy = touch.fingerY;
+        if (wantQuit) {
+          // YES button: 30..118, 130..156   NO button: 138..226, 130..156
+          if (fy >= 130 && fy <= 156) {
+            if (fx >= 30 && fx <= 118) {
+              // YES -> title
+              wantQuit = false;
+              state = STATE.TITLE; titleBlink = 0;
+              stopBGM(); setBossBGM(false);
+              clearGameTimeouts();
+              pressed.Touch = false;
+            } else if (fx >= 138 && fx <= 226) {
+              // NO -> dismiss dialog (stay paused)
+              wantQuit = false;
+              pressed.Touch = false;
+            }
+          }
+        } else {
+          // No dialog -> tap on RESUME area resumes
+          if (fy >= 100 && fy <= 130) {
+            state = STATE.PLAY;
+            pressed.Touch = false;
+          }
+        }
+      }
+      if (pressed.KeyM) muted = !muted;
+      return;
+    }
+    if (pressed.KeyP) { state = STATE.PAUSE; return; }
+    if (pressed.KeyM) muted = !muted;
+
+    if (bannerTimer > 0) bannerTimer--;
+    if (bossWarning > 0) bossWarning--;
+
+    for (const s of stars) { s.y += s.s; if (s.y > H) { s.y = -2; s.x = Math.random()*W; } }
+    for (const c of clouds) { c.y += c.s * 0.6; if (c.y > H + 20) { c.y = -40; c.x = Math.random()*W; c.type = Math.floor(Math.random()*3); } }
+
+    if (!player.dead) {
+      // ----- TOUCH MOVEMENT -----
+      if (touch.active) {
+        const tx = Math.max(8, Math.min(W-8, touch.x));
+        const ty = Math.max(16, Math.min(H-18, touch.y));
+        // Snap directly to finger target — no per-frame speed cap. With the
+        // touch offset (plane shown ~50px above finger) the plane stays
+        // visible. Direct snap is how Sky Force / similar mobile shooters
+        // handle it and feels much more responsive than physics-pulled motion.
+        const prevX = player.x;
+        player.x = tx;
+        player.y = ty;
+        // Use frame delta for sprite tilt (still bounded for visual reasons)
+        const dx = tx - prevX;
+        player.vx = Math.sign(dx) * Math.min(1, Math.abs(dx)/4);
+      } else {
+        // ----- KEYBOARD MOVEMENT -----
+        const sp = 1.8;
+        let dx = 0, dy = 0;
+        if (keys.ArrowLeft  || keys.KeyA) dx -= 1;
+        if (keys.ArrowRight || keys.KeyD) dx += 1;
+        if (keys.ArrowUp    || keys.KeyW) dy -= 1;
+        if (keys.ArrowDown  || keys.KeyS) dy += 1;
+        if (dx && dy) { dx *= 0.707; dy *= 0.707; }
+        player.x += dx * sp; player.y += dy * sp;
+        player.vx = dx;
+        player.x = Math.max(8, Math.min(W-8, player.x));
+        player.y = Math.max(16, Math.min(H-18, player.y));
+      }
+
+      // ----- SHOOTING -----
+      if (player.cooldown > 0) player.cooldown--;
+      const wantShoot = keys.Space || keys.KeyZ || touch.active;
+      if (wantShoot && player.cooldown <= 0) {
+        const px = player.x, py = player.y - 8;
+        if (player.power === 1) bullets.push({x:px, y:py, vx:0, vy:-4.5, dmg:1});
+        else if (player.power === 2) {
+          bullets.push({x:px-4, y:py, vx:0, vy:-4.5, dmg:1});
+          bullets.push({x:px+4, y:py, vx:0, vy:-4.5, dmg:1});
+        } else {
+          bullets.push({x:px, y:py, vx:0, vy:-4.8, dmg:1});
+          bullets.push({x:px-5, y:py+2, vx:-0.6, vy:-4.5, dmg:1});
+          bullets.push({x:px+5, y:py+2, vx:0.6, vy:-4.5, dmg:1});
+        }
+        player.cooldown = 7;
+        sfx.shoot();
+      }
+
+      // ----- BOMB -----
+      if ((pressed.KeyX || wantBomb) && player.bombs > 0) {
+        player.bombs--; bombFlash = 30; shake = 8; sfx.bomb();
+        const toKill = [];
+        for (const e of enemies) {
+          if (e.isBoss) {
+            e.hp -= 8; e.flash = 8;
+            if (e.hp <= 0) toKill.push(e);
+            continue;
+          }
+          for (let i=0; i<8; i++) particles.push(makePart(e.x, e.y, '#ffd84a'));
+          player.score += e.score;
+          e.dead = true;
+        }
+        for (const b of toKill) killBoss(b);
+        enemies = enemies.filter(e => !e.dead);
+        recomputeBossCount();
+        ebullets = [];
+        updateBombUI();
+      }
+      wantBomb = false;
+
+      if (player.invuln > 0) player.invuln--;
+    } else {
+      player.deathTimer--;
+      if (player.deathTimer <= 0) {
+        if (player.lives > 0) {
+          player.lives--; player.dead = false;
+          player.x = W/2; player.y = H-40;
+          player.invuln = 120;
+          player.power = Math.max(1, player.power - 1);
+        } else {
+          highScore = Math.max(highScore, player.score);
+          titleBlink = 0;
+          setBossBGM(false);
+          stopBGM();
+          clearGameTimeouts();   // cancel pending boss spawns / transitions
+          // If score makes top 10 -> name entry, else regular game over
+          const r = rankOf(player.score, highScores);
+          if (r >= 0) {
+            nameEntry.rank = r;
+            nameEntry.score = player.score;
+            nameEntry.stage = stage; nameEntry.loop = loopCount;
+            nameEntry.name = Array(NAME_LEN).fill(' ');
+            nameEntry.pos = 0;
+            nameEntry.kb = 0;
+            nameEntry.blink = 0;
+            state = STATE.NAME_ENTRY;
+          } else {
+            state = STATE.OVER;
+          }
+        }
+      }
+    }
+
+    for (const b of bullets) { b.x += b.vx; b.y += b.vy; }
+    bullets = bullets.filter(b => b.y > -10 && b.x > -10 && b.x < W+10);
+    for (const b of ebullets) { b.x += b.vx; b.y += b.vy; }
+    ebullets = ebullets.filter(b => b.y < H+10 && b.y > -10 && b.x > -10 && b.x < W+10);
+
+    if (bossCount() === 0 && !bossLock && bossWarning <= 0) {
+      waveTimer--;
+      const enemyCap = 8 + Math.min(12, (stage - 1) * 2 + loopCount * 3);
+      if (waveTimer <= 0 && enemies.length < enemyCap) {
+        spawnWave();
+        waveTimer = Math.max(90, 180 - stage*15) + Math.random()*60;
+      }
+    }
+
+    for (const e of enemies) {
+      e.t++;
+      if (e.isBoss) updateBoss(e);
+      else if (e.motion === 'wave') { e.x += e.vx + Math.sin(e.t*0.05) * 0.4; e.y += e.vy; }
+      else if (e.motion === 'sweep') { e.x = W/2 + Math.sin(e.t*0.02) * 80; e.y += e.vy * (e.y < 50 ? 1 : 0.2); }
+      else { e.x += e.vx; e.y += e.vy; }
+
+      if (e.flash > 0) e.flash--;
+      if (e.shoots && !e.isBoss && !player.dead) {
+        e.shootCD--;
+        if (e.shootCD <= 0 && e.y > 0 && e.y < H/2) {
+          const dx = player.x - e.x, dy = player.y - e.y;
+          const d = Math.hypot(dx,dy) || 1;
+          ebullets.push({x:e.x, y:e.y+6, vx:dx/d*1.6, vy:dy/d*1.6, big:false});
+          e.shootCD = Math.max(40, 90 - stage*5) + Math.random()*40;
+        }
+      }
+    }
+    enemies = enemies.filter(e => e.isBoss || (e.y < H + 30 && e.x > -30 && e.x < W + 30));
+    recomputeBossCount();
+
+    for (const p of powerups) { p.y += 0.7; p.t = (p.t||0) + 1; }
+    powerups = powerups.filter(p => p.y < H + 10);
+
+    for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.04; }
+    particles = particles.filter(p => p.life > 0);
+
+    for (const f of scoreFloaters) { f.y -= 0.5; f.life--; }
+    scoreFloaters = scoreFloaters.filter(f => f.life > 0);
+
+    if (bombFlash > 0) bombFlash--;
+    if (shake > 0) shake--;
+    if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) combo = 0; }
+
+    for (const b of bullets) {
+      for (const e of enemies) {
+        if (e.dead) continue;            // FIX: skip already-dead enemies
+        if (Math.abs(b.x - e.x) < e.w/2 + 1 && Math.abs(b.y - e.y) < e.h/2 + 1) {
+          e.hp -= b.dmg; e.flash = 4;
+          b.dead = true;
+          for (let i=0;i<2;i++) particles.push(makePart(b.x, b.y, '#ffe080', 16));
+          if (e.hp <= 0) {
+            if (e.isBoss) killBoss(e);
+            else {
+              for (let i=0;i<10;i++) particles.push(makePart(e.x, e.y, '#ff8040'));
+              for (let i=0;i<6;i++) particles.push(makePart(e.x, e.y, '#ffd84a'));
+              combo++; comboTimer = 90;
+              const mult = 1 + Math.floor(combo / 5) * 0.5;
+              const gained = Math.floor(e.score * mult);
+              player.score += gained;
+              if (combo > 1) scoreFloaters.push({x:e.x, y:e.y-6, text:'+'+gained, life:40, color:'#ffd84a'});
+              sfx.boom();
+              if (Math.random() < 0.12 || (e.type === 'C' && Math.random() < 0.6)) {
+                powerups.push({x: e.x, y: e.y, t:0, type: Math.random() < 0.85 ? 'P' : 'B'});
+              }
+              e.dead = true;
+            }
+          } else sfx.hit();
+          break;
+        }
+      }
+    }
+    bullets = bullets.filter(b => !b.dead);
+    enemies = enemies.filter(e => !e.dead);
+    recomputeBossCount();
+
+    if (!player.dead && player.invuln <= 0) {
+      for (const b of ebullets) {
+        const r = b.big ? 5 : 4;
+        if (Math.abs(b.x - player.x) < r && Math.abs(b.y - player.y) < r) {
+          killPlayer(); b.dead = true; break;
+        }
+      }
+      ebullets = ebullets.filter(b => !b.dead);
+    }
+
+    if (!player.dead && player.invuln <= 0) {
+      for (const e of enemies) {
+        if (Math.abs(e.x - player.x) < e.w/2 + 4 && Math.abs(e.y - player.y) < e.h/2 + 4) {
+          killPlayer();
+          if (!e.isBoss) {
+            for (let i=0;i<8;i++) particles.push(makePart(e.x, e.y, '#ff8040'));
+            e.dead = true;
+          }
+          break;
+        }
+      }
+      enemies = enemies.filter(e => !e.dead);
+    }
+
+    if (!player.dead) {
+      for (const p of powerups) {
+        if (Math.abs(p.x - player.x) < 8 && Math.abs(p.y - player.y) < 8) {
+          p.dead = true;
+          if (p.type === 'B') { player.bombs = Math.min(9, player.bombs + 1); updateBombUI(); }
+          else if (p.type === 'L') {
+            player.lives = Math.min(9, player.lives + 1);
+            scoreFloaters.push({x:p.x, y:p.y-6, text:'1UP', life:60, color:'#ff80a0'});
+          }
+          else { if (player.power < 3) player.power++; else player.score += 500; }
+          sfx.power();
+        }
+      }
+      powerups = powerups.filter(p => !p.dead);
+    }
+  }
+
+  function updateBoss(e) {
+    if (e.y < e.targetY) { e.y += e.vy; return; }
+
+    // Center the sway around the boss's own spawn center, not W/2.
+    // Reduce sway amplitude when there are multiple bosses to avoid collisions.
+    const numBosses = bossCount();
+    const swayMul = numBosses > 1 ? 0.4 : 1.0;
+    const cx = e.xCenter ?? W/2;
+
+    if (e.bossType === 'UFO') {
+      e.x = cx + Math.sin(e.t * 0.02) * 80 * swayMul;
+      e.y = e.targetY + Math.sin(e.t * 0.04) * 6;
+    } else if (e.bossType === 'ONI') {
+      e.x = cx + Math.sin(e.t * 0.012) * 50 * swayMul;
+      e.y = e.targetY + Math.sin(e.t * 0.06) * 4;
+    } else if (e.bossType === 'EYE') {
+      e.x = cx + Math.sin(e.t * 0.025) * 70 * swayMul;
+    } else if (e.bossType === 'LORD') {
+      e.x = cx + Math.sin(e.t * 0.008) * 90 * swayMul;
+    } else if (e.bossType === 'SQUID') {
+      e.x = cx + Math.sin(e.t * 0.018) * 70 * swayMul;
+      e.y = e.targetY + Math.sin(e.t * 0.08) * 5;
+    } else {
+      e.x = cx + Math.sin(e.t * 0.015) * 60 * swayMul;
+    }
+
+    // Keep within screen
+    const margin = 18;
+    if (e.x < margin) e.x = margin;
+    if (e.x > W - margin) e.x = W - margin;
+
+    const ratio = e.hp / e.maxHp;
+    if (ratio < 0.5)  e.phase = 1;
+    if (ratio < 0.25) e.phase = 2;
+
+    e.shootCD--;
+    if (e.shootCD <= 0 && !player.dead) {
+      bossAttack(e);
+    }
+  }
+
+  function bossAttack(e) {
+    const dx = player.x - e.x, dy = player.y - e.y;
+    const ang = Math.atan2(dy, dx);
+    const d = Math.hypot(dx, dy) || 1;
+
+    switch (e.bossType) {
+      case 'UFO': {
+        // Phase 0: twin aimed beams. Phase 1: 360 saucer ring. Phase 2: rapid spiral.
+        if (e.phase === 0) {
+          for (const ox of [-10, 10]) {
+            ebullets.push({x:e.x+ox, y:e.y+8, vx:Math.cos(ang)*2.0, vy:Math.sin(ang)*2.0, big:false});
+          }
+          e.shootCD = 45;
+        } else if (e.phase === 1) {
+          const off = e.t * 0.03;
+          for (let i=0; i<10; i++) {
+            const a = (i / 10) * Math.PI * 2 + off;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*1.4, vy:Math.sin(a)*1.4, big:false});
+          }
+          e.shootCD = 60;
+        } else {
+          // spiral
+          for (let i=0; i<4; i++) {
+            const a = e.t * 0.12 + i * Math.PI/2;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
+          }
+          e.shootCD = 18;
+        }
+        return;
+      }
+      case 'ONI': {
+        // Heavy aimed projectiles, twin volleys, scatter
+        if (e.phase === 0) {
+          // twin big aimed bullets only (drop flanking shots)
+          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.5, vy:dy/d*1.5, big:true});
+          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.5, vy:dy/d*1.5, big:true});
+          e.shootCD = 65;
+        } else if (e.phase === 1) {
+          // 3-way spread + aimed big bullet
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.25;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.5, vy:Math.sin(a)*1.5, big:i===0});
+          }
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.0, vy:dy/d*2.0, big:true});
+          e.shootCD = 55;
+        } else {
+          // scatter + aimed barrage (toned down from 7 to 5)
+          for (let i=0; i<5; i++) {
+            const a = ang + (Math.random()-0.5) * 1.2;
+            const sp = 1.4 + Math.random()*0.6;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, big:false});
+          }
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*1.9, vy:dy/d*1.9, big:true});
+          e.shootCD = 45;
+        }
+        return;
+      }
+      case 'EYE': {
+        // Precision angled shots, then orthogonal crosses
+        if (e.phase === 0) {
+          // tight 3-way fast
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.12;
+            ebullets.push({x:e.x, y:e.y+8, vx:Math.cos(a)*2.4, vy:Math.sin(a)*2.4, big:false});
+          }
+          e.shootCD = 35;
+        } else if (e.phase === 1) {
+          // cross pattern (4 cardinal directions)
+          for (let i=0; i<4; i++) {
+            const a = i * Math.PI/2 + e.t*0.02;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
+          }
+          // plus aimed big
+          ebullets.push({x:e.x, y:e.y+8, vx:dx/d*2.2, vy:dy/d*2.2, big:true});
+          e.shootCD = 40;
+        } else {
+          // 8-way burst, very fast
+          for (let i=0; i<8; i++) {
+            const a = i * Math.PI/4 + e.t*0.04;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*2.3, vy:Math.sin(a)*2.3, big:false});
+          }
+          e.shootCD = 28;
+        }
+        return;
+      }
+      case 'LORD': {
+        // Aimed laser shots, expanding rings
+        if (e.phase === 0) {
+          // aimed big shot + 2 flanking shots only (drop the 4-way spread)
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
+          ebullets.push({x:e.x-6, y:e.y+4, vx:dx/d*2.4 + 0.8, vy:dy/d*2.4, big:false});
+          ebullets.push({x:e.x+6, y:e.y+4, vx:dx/d*2.4 - 0.8, vy:dy/d*2.4, big:false});
+          e.shootCD = 50;
+        } else if (e.phase === 1) {
+          // 10-way ring + aimed big shot
+          for (let i=0; i<10; i++) {
+            const a = (i / 10) * Math.PI * 2;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.8, vy:Math.sin(a)*1.8, big:false});
+          }
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
+          e.shootCD = 55;
+        } else {
+          // single rotating ring + aimed laser triplet (was double-ring fireworks)
+          for (let i=0; i<10; i++) {
+            const a = (i / 10) * Math.PI * 2 + e.t*0.02;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
+          }
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.08;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.8, vy:Math.sin(a)*2.8, big:i===0});
+          }
+          e.shootCD = 38;
+        }
+        return;
+      }
+      default: {
+        // SQUID — spread + ring + 5way
+        if (e.phase === 0) {
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.25;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.6, vy:Math.sin(a)*1.6, big:false});
+          }
+          e.shootCD = 50;
+        } else if (e.phase === 1) {
+          for (let i=0; i<8; i++) {
+            const a = (i / 8) * Math.PI * 2 + e.t*0.01;
+            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.3, vy:Math.sin(a)*1.3, big:false});
+          }
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*1.8, vy:dy/d*1.8, big:true});
+          e.shootCD = 70;
+        } else {
+          for (let i=-2; i<=2; i++) {
+            const a = ang + i * 0.18;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
+          }
+          e.shootCD = 35;
+        }
+      }
+    }
+  }
+
+  function killBoss(e) {
+    if (e.dead) return;                  // FIX: don't run kill logic twice
+    e.dead = true;
+    sfx.bigboom();
+    shake = 24; bombFlash = 20;
+    for (let i=0;i<60;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ff8040', 60));
+    for (let i=0;i<40;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffd84a', 50));
+    for (let i=0;i<30;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffffff', 40));
+    player.score += e.score;
+    scoreFloaters.push({x:e.x, y:e.y, text:'+'+e.score, life:80, color:'#ffd84a'});
+    if (e.bossType) { defeatedBosses[e.bossType] = true; saveDefeated(); }
+
+    bossesKilledThisStage++;
+    totalBossKills++;
+    // Always drop the P/B/P trio. Every 3 boss kills, ALSO drop a heart
+    // floating just above the trio so the icons don't overlap.
+    for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
+    if (totalBossKills % 3 === 0) {
+      powerups.push({x: e.x, y: e.y - 16, t: 0, type: 'L'});
+    }
+
+    // The cached bossCount is stale here (we just set e.dead inside the same
+    // frame). Recompute before checking, otherwise we'd think other bosses
+    // are still alive and never advance the stage.
+    recomputeBossCount();
+    if (bossCount() > 0) return;
+
+    // All bosses for this stage are now dead.
+    setBossBGM(false);
+    bossLock = true;  // hold the wave gate closed during transition
+
+    scheduleGame(() => {
+      if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
+
+      const isLastStage = (stage >= FINAL_STAGE);
+
+      if (loopCount >= 2) {
+        // Loop 3 was the FINAL stage with 3 mixed bosses. Game ends in CLEAR.
+        cleared = true;
+        const finalBonus = 100000;
+        const livesBonus = (player.lives + 1) * 10000;
+        player.score += finalBonus + livesBonus;
+        scoreFloaters.push({x:W/2, y:H/2 - 12, text:'CLEAR BONUS +'+finalBonus, life:120, color:'#ffd84a'});
+        scoreFloaters.push({x:W/2, y:H/2 + 4,  text:'LIVES BONUS +'+livesBonus, life:120, color:'#80ffe0'});
+        showBanner('CONGRATULATIONS', 'GAME CLEAR !!');
+
+        // After the celebration banner, go to high-score / over flow.
+        scheduleGame(() => {
+          if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
+          stopBGM();
+          highScore = Math.max(highScore, player.score);
+          const r = rankOf(player.score, highScores);
+          if (r >= 0) {
+            nameEntry.rank = r;
+            nameEntry.score = player.score;
+            nameEntry.stage = stage; nameEntry.loop = loopCount;
+            nameEntry.name = Array(NAME_LEN).fill(' ');
+            nameEntry.pos = 0;
+            nameEntry.kb = 0;
+            nameEntry.blink = 0;
+            state = STATE.NAME_ENTRY;
+          } else {
+            state = STATE.OVER;
+          }
+        }, 3000);
+        return;
+      }
+
+      if (isLastStage) {
+        // End of loops 1 or 2 -> advance to next loop
+        loopCount++;
+        const loopBonus = 30000 * loopCount;
+        player.score += loopBonus;
+        scoreFloaters.push({x:W/2, y:H/2, text:'LOOP BONUS +'+loopBonus, life:100, color:'#ffd84a'});
+        cleared = true;
+
+        if (loopCount === 2) {
+          // Going into the FINAL loop (just one stage with 3 mixed bosses)
+          stage = FINAL_STAGE;
+          stageWaves = 0;
+          showBanner('FINAL STAGE !!', '3 OVERLORDS APPROACH');
+          waveTimer = 9999; // disable wave timer; we'll spawn boss directly
+          // Spawn the final 3-boss assault after the banner
+          scheduleGame(() => {
+            if (state === STATE.PLAY || state === STATE.PAUSE) spawnBoss();
+          }, 2200);
+        } else {
+          // Loop 2: restart from stage 1
+          stage = 1; stageWaves = 0;
+          showBanner('ALL CLEAR !!', 'LOOP 2  x2 BOSSES');
+          waveTimer = 180;
+          // Follow-up banner so the player sees the new stage label "2-1"
+          scheduleGame(() => {
+            if (state === STATE.PLAY || state === STATE.PAUSE) {
+              showBanner('STAGE ' + stageLabel(), 'GET READY');
+            }
+          }, 1700);
+        }
+      } else {
+        stage++; stageWaves = 0;
+        showBanner('STAGE ' + stageLabel(), 'GET READY');
+        waveTimer = 90;
+      }
+      bossLock = false;
+    }, 1500);
+  }
+
+  function killPlayer() {
+    player.dead = true; player.deathTimer = 60;
+    shake = 10; sfx.death(); combo = 0;
+    for (let i=0;i<24;i++) particles.push(makePart(player.x, player.y, '#ffd84a'));
+    for (let i=0;i<16;i++) particles.push(makePart(player.x, player.y, '#ff5040'));
+  }
+
+  function makePart(x, y, color, life=24) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = Math.random() * 1.8 + 0.3;
+    return { x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life, max:life, color };
+  }
+
+  function fillRect(x,y,w,h){ ctx.fillRect(Math.floor(x),Math.floor(y),w,h); }
+
+  function drawCloud(c) {
+    ctx.save();
+    ctx.translate(Math.floor(c.x), Math.floor(c.y));
+    if (c.type === 0) {
+      ctx.fillStyle = '#1a3030'; fillRect(-10, 0, 20, 6);
+      ctx.fillStyle = '#2a5040'; fillRect(-8, -3, 16, 5);
+      ctx.fillStyle = '#40805a'; fillRect(-6, -5, 12, 3);
+      ctx.fillStyle = '#60a070'; fillRect(-3, -7, 6, 2);
+    } else if (c.type === 1) {
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      fillRect(-8, -2, 16, 4); fillRect(-5, -4, 10, 2);
+      fillRect(-10, 0, 20, 2); fillRect(-6, 2, 12, 2);
+    } else {
+      ctx.fillStyle = '#102030'; fillRect(-6, 0, 12, 4);
+      ctx.fillStyle = '#205040'; fillRect(-4, -2, 8, 3);
+      ctx.fillStyle = '#3a7050'; fillRect(-2, -4, 4, 2);
+    }
+    ctx.restore();
+  }
+
+  function drawBackground() {
+    const bands = bossCount() > 0 ? [
+      ['#1a0a18', 0,30],['#2a0e22', 30,60],['#3a1828', 60,100],
+      ['#4a2438', 100,150],['#3a1828', 150,200],['#2a0e22', 200,224],
+    ] : [
+      ['#0a1030', 0,30],['#0e1850', 30,60],['#1a2870', 60,100],
+      ['#264090', 100,150],['#1a3070', 150,200],['#0e1850', 200,224],
+    ];
+    for (const [c, y1, y2] of bands) { ctx.fillStyle = c; ctx.fillRect(0, y1, W, y2 - y1); }
+    for (const s of stars) { ctx.fillStyle = s.c; ctx.fillRect(Math.floor(s.x), Math.floor(s.y), 1, 1); }
+    for (const c of clouds) drawCloud(c);
+  }
+
+  function drawSprite(spr, x, y, flash=false) {
+    const fx = Math.floor(x - spr.width/2), fy = Math.floor(y - spr.height/2);
+    ctx.drawImage(spr, fx, fy);
+    if (flash) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillRect(fx, fy, spr.width, spr.height);
+      ctx.restore();
+    }
+  }
+
+  function drawPlayer() {
+    if (player.dead) return;
+    if (player.invuln > 0 && Math.floor(player.invuln/4) % 2) return;
+    let spr = SPR_PLAYER;
+    if (player.vx < -0.1) spr = SPR_PLAYER_L;
+    else if (player.vx > 0.1) spr = SPR_PLAYER_R;
+    drawSprite(spr, player.x, player.y);
+    ctx.fillStyle = (Date.now()>>5)&1 ? '#ffe040' : '#ff8020';
+    ctx.fillRect(Math.floor(player.x)-1, Math.floor(player.y)+8, 2, 2);
+  }
+
+  function drawEnemies() {
+    for (const e of enemies) {
+      let spr;
+      if (e.isBoss) spr = e.bossSpr || SPR_BOSS_SQUID;
+      else if (e.type === 'A') spr = SPR_ENEMY_A;
+      else if (e.type === 'B') spr = SPR_ENEMY_B;
+      else spr = SPR_ENEMY_C;
+      drawSprite(spr, e.x, e.y, e.flash > 0);
+    }
+  }
+
+  function drawBullets() {
+    for (const b of bullets) drawSprite(SPR_BULLET_P, b.x, b.y);
+    for (const b of ebullets) drawSprite(b.big ? SPR_BULLET_BIG : SPR_BULLET_E, b.x, b.y);
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      const a = p.life / p.max;
+      ctx.globalAlpha = Math.min(1, a*1.3);
+      ctx.fillStyle = p.color;
+      const s = a > 0.5 ? 2 : 1;
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), s, s);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPowerups() {
+    for (const p of powerups) {
+      const bob = Math.sin(p.t * 0.15) * 1.5;
+      let spr;
+      if (p.type === 'B') spr = SPR_BOMB_ITEM;
+      else if (p.type === 'L') spr = SPR_LIFE;
+      else spr = SPR_POWER;
+      drawSprite(spr, p.x, p.y + bob);
+    }
+  }
+
+  function drawText(text, x, y, color='#ffffff', size=8, align='left') {
+    ctx.font = `${size}px "Press Start 2P", monospace`;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, Math.floor(x), Math.floor(y));
+  }
+
+  function drawHUD() {
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(0, 0, W, 12);
+    drawText('SCORE', 4, 3, '#80c0ff', 6);
+    drawText(String(player.score).padStart(7, '0'), 36, 3, '#fff080', 6);
+    drawText('ST', W/2 - 18, 3, '#80c0ff', 6);
+    {
+      const lbl = stageLabel();
+      const color = (loopCount >= 2) ? '#ff4060' : (loopCount === 1 ? '#ff80a0' : '#ffd84a');
+      drawText(lbl, W/2 - 2, 3, color, 6);
+    }
+    drawText('HI', W-78, 3, '#80c0ff', 6);
+    drawText(String(Math.max(highScore, player.score)).padStart(7, '0'), W-66, 3, '#ffd84a', 6);
+
+    const bosses = enemies.filter(e => e.isBoss);
+    if (bosses.length > 0) {
+      let totalHp = 0, totalMax = 0;
+      for (const b of bosses) { totalHp += b.hp; totalMax += b.maxHp; }
+      ctx.fillStyle = '#000'; ctx.fillRect(20, 16, W-40, 5);
+      ctx.fillStyle = '#400a14'; ctx.fillRect(21, 17, W-42, 3);
+      const r = Math.max(0, totalHp / totalMax);
+      ctx.fillStyle = r > 0.5 ? '#ff4060' : r > 0.25 ? '#ff8040' : '#ffd84a';
+      ctx.fillRect(21, 17, Math.floor((W-42)*r), 3);
+      const label = bosses.length > 1
+        ? bosses[0].bossType + ' x' + bosses.length
+        : (bosses[0].bossType || 'BOSS');
+      drawText(label, 22, 22, '#ff6080', 6);
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(0, H-14, W, 14);
+    for (let i=0;i<player.lives;i++) ctx.drawImage(SPR_PLAYER, 4 + i*10, H-12, 8, 8);
+    drawText('B', W/2 - 30, H-10, '#80ffe0', 6);
+    drawText(String(player.bombs), W/2 - 20, H-10, '#fff080', 6);
+    if (combo > 1) drawText(combo + 'x', W/2, H-10, '#ff80a0', 6, 'center');
+    drawText('PWR', W - 60, H-10, '#ff80a0', 6);
+    for (let i=0;i<3;i++) {
+      ctx.fillStyle = i < player.power ? '#ffd84a' : '#404858';
+      ctx.fillRect(W - 36 + i*8, H-10, 6, 6);
+    }
+  }
+
+  function drawTitle() {
+    drawText('SKY', W/2, 36, '#ffd84a', 24, 'center');
+    drawText('STRIKER', W/2, 66, '#ff5070', 16, 'center');
+    drawText('- 1989 ANTHROPIC SOFT -', W/2, 96, '#80c0ff', 6, 'center');
+    drawSprite(SPR_PLAYER, W/2, 124);
+    if (Math.floor(titleBlink/30) % 2) {
+      const msg = isTouch ? 'TAP  TO  START' : 'PRESS  Z  TO  START';
+      drawText(msg, W/2, 152, '#ffffff', 8, 'center');
+    }
+    if (isTouch) {
+      drawText('DRAG TO MOVE  AUTO-FIRE', W/2, 172, '#6080a0', 6, 'center');
+    } else {
+      drawText('Z FIRE  X BOMB  P PAUSE  M MUTE', W/2, 172, '#6080a0', 6, 'center');
+    }
+
+    // Bottom split: TOP 10 (left) | BOSSES (right)
+    const stripY = H - 32;
+    ctx.fillStyle = 'rgba(255,216,74,0.08)';
+    ctx.fillRect(0, stripY, W, 32);
+    ctx.fillStyle = '#ffd84a';
+    ctx.fillRect(0, stripY, W, 1);
+    ctx.fillRect(W/2, stripY, 1, 32);
+
+    const labelY = stripY + 5;
+    const valY   = stripY + 18;
+    drawText(isTouch ? 'TOP 10 ▶' : 'H : TOP 10', W/4, labelY, '#ffd84a', 6, 'center');
+    if (highScores[0]) {
+      drawText('1ST ' + highScores[0].name, W/4, valY, '#fff080', 6, 'center');
+      drawText(String(highScores[0].score).padStart(7,'0'), W/4, valY + 8, '#fff080', 6, 'center');
+    }
+    drawText(isTouch ? 'BOSSES ▶' : 'B : BOSSES', 3*W/4, labelY, '#ffd84a', 6, 'center');
+    const defeatedCount = BOSS_TYPES.filter(b => defeatedBosses[b.name]).length;
+    drawText(defeatedCount + ' / ' + BOSS_TYPES.length, 3*W/4, valY, '#fff080', 6, 'center');
+    drawText('DEFEATED', 3*W/4, valY + 8, '#80c0ff', 6, 'center');
+  }
+
+  function drawBestiary() {
+    drawText('BOSS GALLERY', W/2, 8, '#ffd84a', 10, 'center');
+    drawText((bestiaryIdx + 1) + ' / ' + BOSS_TYPES.length, W/2, 22, '#80c0ff', 6, 'center');
+
+    const boss = BOSS_TYPES[bestiaryIdx];
+    const defeated = !!defeatedBosses[boss.name];
+
+    // Sprite or silhouette
+    const sx = W/2, sy = 70;
+    if (defeated) {
+      drawSprite(boss.spr, sx, sy);
+    } else {
+      // Silhouette: render the sprite then mask with dark color
+      const off = document.createElement('canvas');
+      off.width = boss.spr.width; off.height = boss.spr.height;
+      const oc = off.getContext('2d');
+      oc.drawImage(boss.spr, 0, 0);
+      oc.globalCompositeOperation = 'source-in';
+      oc.fillStyle = '#202028';
+      oc.fillRect(0, 0, off.width, off.height);
+      ctx.drawImage(off, Math.floor(sx - off.width/2), Math.floor(sy - off.height/2));
+    }
+
+    // Info
+    const infoY = 124;
+    if (defeated) {
+      drawText('STAGE ' + (bestiaryIdx + 1), W/2, infoY, '#80c0ff', 7, 'center');
+      drawText(boss.label, W/2, infoY + 14, '#ffd84a', 9, 'center');
+      drawText('DEFEATED', W/2, infoY + 30, '#80ff80', 6, 'center');
+    } else {
+      drawText('STAGE ' + (bestiaryIdx + 1), W/2, infoY, '#80c0ff', 7, 'center');
+      drawText('? ? ? ? ?', W/2, infoY + 14, '#404858', 9, 'center');
+      drawText('NOT YET ENCOUNTERED', W/2, infoY + 30, '#606878', 6, 'center');
+    }
+
+    // Navigation arrows
+    const ax = 12, ax2 = W - 12;
+    const ay = sy;
+    const blink = Math.floor(titleBlink / 20) % 2;
+    drawText('<', ax,  ay, blink ? '#ffd84a' : '#80c0ff', 12, 'center');
+    drawText('>', ax2, ay, blink ? '#ffd84a' : '#80c0ff', 12, 'center');
+
+    // Help
+    if (Math.floor(titleBlink/30) % 2) {
+      drawText(isTouch ? 'TAP CENTER TO RETURN' : 'ESC OR B TO RETURN', W/2, H - 12, '#ffffff', 6, 'center');
+    }
+  }
+
+  function drawScoresScreen() {
+    drawText('TOP 10', W/2, 14, '#ffd84a', 14, 'center');
+    drawText('  RANK  NAME       SCORE   STAGE', W/2, 36, '#80c0ff', 6, 'center');
+    ctx.fillStyle = '#80c0ff';
+    ctx.fillRect(20, 44, W - 40, 1);
+    const startY = 50;
+    const lineH = 13;
+    for (let i=0; i<HS_MAX; i++) {
+      const e = highScores[i];
+      const y = startY + i * lineH;
+      const color = i === 0 ? '#ffd84a' : i < 3 ? '#fff080' : '#e0e0f0';
+      const rank = String(i+1).padStart(2, ' ');
+      if (e) {
+        const name = (e.name || '').padEnd(NAME_LEN, ' ').slice(0, NAME_LEN);
+        const score = String(e.score).padStart(7, '0');
+        const stg = entryStageLabel(e).padStart(5, ' ');
+        drawText(`${rank}  ${name}  ${score}  ${stg}`, W/2, y, color, 6, 'center');
+      } else {
+        drawText(`${rank}  ------  -------  -----`, W/2, y, '#404858', 6, 'center');
+      }
+    }
+    if (Math.floor(titleBlink/30) % 2) {
+      drawText(isTouch ? 'TAP TO RETURN' : 'PRESS Z OR ESC', W/2, H - 12, '#ffffff', 6, 'center');
+    }
+  }
+
+  function drawNameEntry() {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, W, H);
+
+    drawText('NEW HIGH SCORE !!', W/2, 6, '#ffd84a', 8, 'center');
+    drawText('RANK ' + (nameEntry.rank + 1) + '   STAGE ' + entryStageLabel({stage: nameEntry.stage, loop: nameEntry.loop}), W/2, 18, '#80c0ff', 6, 'center');
+    drawText(String(nameEntry.score).padStart(7, '0'), W/2, 28, '#fff080', 8, 'center');
+
+    // ---- Name display row ----
+    drawText('NAME', W/2, NE.nameRowY - 14, '#80c0ff', 6, 'center');
+    const showCursor = Math.floor(nameEntry.blink / 12) % 2 === 0;
+    for (let i=0; i<NAME_LEN; i++) {
+      const cx = NE.nameBaseX + i * NE.charW;
+      const isSel = (nameEntry.pos === i);
+      ctx.fillStyle = isSel ? '#ffd84a' : '#606878';
+      ctx.fillRect(Math.floor(cx - NE.charW/2 + 1), NE.nameRowY + 6, NE.charW - 2, 1);
+      const ch = nameEntry.name[i];
+      const showLetter = !(isSel && !showCursor && ch === ' ');
+      if (showLetter) {
+        drawText(ch === ' ' ? '_' : ch, cx, NE.nameRowY - 4, isSel ? '#ffd84a' : '#ffffff', 9, 'center');
+      }
+    }
+
+    // ---- Keyboard grid ----
+    for (let i=0; i<KB_CHARS.length; i++) {
+      const r = Math.floor(i / KB_COLS);
+      const c = i % KB_COLS;
+      const x = NE.kbX + c * NE.kbCellW;
+      const y = NE.kbY + r * NE.kbCellH;
+      const isSel = (nameEntry.kb === i);
+      const ch = KB_CHARS[i];
+      const isAction = (ch === 'DEL' || ch === 'OK');
+      // background
+      ctx.fillStyle = isSel ? '#ffd84a' : (isAction ? '#403040' : '#1a1a28');
+      ctx.fillRect(x + 1, y + 1, NE.kbCellW - 2, NE.kbCellH - 2);
+      // border
+      ctx.fillStyle = isSel ? '#ffffff' : (isAction ? '#80c0ff' : '#404858');
+      ctx.fillRect(x + 1, y + 1, NE.kbCellW - 2, 1);
+      ctx.fillRect(x + 1, y + NE.kbCellH - 2, NE.kbCellW - 2, 1);
+      ctx.fillRect(x + 1, y + 1, 1, NE.kbCellH - 2);
+      ctx.fillRect(x + NE.kbCellW - 2, y + 1, 1, NE.kbCellH - 2);
+      // text
+      const tx = x + NE.kbCellW / 2;
+      const ty = y + 5;
+      const color = isSel ? '#101820' : (isAction ? '#ffe080' : '#ffffff');
+      const size = isAction ? 6 : 8;
+      drawText(ch, tx, ty + (isAction ? 1 : 0), color, size, 'center');
+    }
+
+    // ---- Help text ----
+    const helpY = NE.kbY + 5 * NE.kbCellH + 4;
+    if (isTouch) {
+      drawText('TAP A KEY TO TYPE', W/2, helpY, '#80c0ff', 6, 'center');
+      drawText('TAP NAME TO MOVE CURSOR', W/2, helpY + 10, '#6080a0', 6, 'center');
+    } else {
+      drawText('TYPE TO ENTER  BACKSPACE TO DELETE', W/2, helpY, '#80c0ff', 6, 'center');
+      drawText('OR ARROWS + SPACE/ENTER', W/2, helpY + 10, '#6080a0', 6, 'center');
+    }
+  }
+
+  function drawGameOver() {
+    drawText('GAME', W/2, 70, '#ff4060', 20, 'center');
+    drawText('OVER', W/2, 95, '#ff4060', 20, 'center');
+    drawText('STAGE  ' + stage, W/2, 125, '#80c0ff', 7, 'center');
+    drawText('SCORE  ' + String(player.score).padStart(7, '0'), W/2, 140, '#ffd84a', 7, 'center');
+    drawText('HI     ' + String(Math.max(highScore, player.score)).padStart(7, '0'), W/2, 155, '#80c0ff', 7, 'center');
+    if (Math.floor(titleBlink/30) % 2) {
+      const msg = isTouch ? 'TAP  TO  CONTINUE' : 'PRESS  Z  TO CONTINUE';
+      drawText(msg, W/2, 185, '#ffffff', 7, 'center');
+    }
+  }
+
+  function drawPauseOverlay() {
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(0, 0, W, H);
+
+    if (wantQuit) {
+      // ----- QUIT CONFIRM DIALOG -----
+      drawText('QUIT TO TITLE?', W/2, 70, '#ffffff', 12, 'center');
+      drawText('PROGRESS WILL BE LOST', W/2, 96, '#ff8080', 6, 'center');
+
+      // YES button (left, red)
+      ctx.fillStyle = '#8a1020';
+      ctx.fillRect(30, 130, 88, 26);
+      ctx.fillStyle = '#ff6060';
+      ctx.fillRect(30, 130, 88, 1);
+      ctx.fillRect(30, 155, 88, 1);
+      ctx.fillRect(30, 130, 1, 26);
+      ctx.fillRect(117, 130, 1, 26);
+      drawText('YES', 30 + 44, 138, '#ffffff', 10, 'center');
+
+      // NO button (right, blue)
+      ctx.fillStyle = '#1a3a8a';
+      ctx.fillRect(138, 130, 88, 26);
+      ctx.fillStyle = '#80c0ff';
+      ctx.fillRect(138, 130, 88, 1);
+      ctx.fillRect(138, 155, 88, 1);
+      ctx.fillRect(138, 130, 1, 26);
+      ctx.fillRect(225, 130, 1, 26);
+      drawText('NO', 138 + 44, 138, '#ffffff', 10, 'center');
+
+      drawText(isTouch ? 'TAP TO CHOOSE' : 'Q : YES   ESC : NO', W/2, 175, '#80c0ff', 6, 'center');
+    } else {
+      // ----- NORMAL PAUSE -----
+      drawText('PAUSE', W/2, 80, '#ffffff', 16, 'center');
+      drawText(isTouch ? 'TAP HERE TO RESUME' : 'P / ESC : RESUME', W/2, 112, '#80c0ff', 7, 'center');
+    }
+  }
+
+  function drawBanner() {
+    if (bannerTimer <= 0) return;
+    const t = bannerTimer;
+    let alpha = 1;
+    if (t > 130) alpha = (150 - t) / 20;
+    else if (t < 30) alpha = t / 30;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(0, H/2 - 24, W, 48);
+    ctx.fillStyle = '#ffd84a';
+    ctx.fillRect(0, H/2 - 24, W, 1);
+    ctx.fillRect(0, H/2 + 23, W, 1);
+    drawText(bannerText, W/2, H/2 - 18, '#ffd84a', 14, 'center');
+    drawText(bannerSub, W/2, H/2 + 4, '#ffffff', 7, 'center');
+    ctx.globalAlpha = 1;
+  }
+
+  function drawWarning() {
+    if (bossWarning <= 0) return;
+    const blink = Math.floor(bossWarning / 8) % 2;
+    if (blink) { ctx.fillStyle = 'rgba(180,20,40,.4)'; ctx.fillRect(0, H/2 - 30, W, 60); }
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, H/2 - 14, W, 28);
+    drawText('!! WARNING !!', W/2, H/2 - 10, blink ? '#ff4060' : '#ffd84a', 12, 'center');
+    let msg;
+    if (loopCount >= 2) {
+      msg = '3 OVERLORDS APPROACHING';
+    } else {
+      const upcoming = BOSS_TYPES[Math.min(stage - 1, BOSS_TYPES.length - 1)].name;
+      const msgs = {
+        SQUID:  'COSMIC CALAMARI INBOUND',
+        UFO:    'UNKNOWN SAUCER DETECTED',
+        ONI:    'DEMON CLASS HOSTILE',
+        EYE:    'COSMIC OVERSEER AWAKENS',
+        LORD:   'THE DEMON LORD ARRIVES',
+      };
+      msg = msgs[upcoming] || 'HOSTILE INBOUND';
+      if (loopCount === 1) msg = msg + ' x2';
+    }
+    drawText(msg, W/2, H/2 + 4, '#ffffff', 6, 'center');
+  }
+
+  function drawScoreFloaters() {
+    for (const f of scoreFloaters) {
+      const a = Math.min(1, f.life / 30);
+      ctx.globalAlpha = a;
+      drawText(f.text, f.x, f.y, f.color, 6, 'center');
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Cache icon refs once
+  const iconWaves = document.getElementById('icon-waves');
+  const iconX     = document.getElementById('icon-x');
+  const iconPause = document.getElementById('icon-pause');
+  const iconPlay  = document.getElementById('icon-play');
+  const iconFsEnter = document.getElementById('icon-fs-enter');
+  const iconFsExit  = document.getElementById('icon-fs-exit');
+
+  // UI sync: only writes to the DOM when the state it reads has actually
+  // changed. Calling this 60 times/sec was forcing the browser to constantly
+  // reflow even when nothing was different.
+  const uiState = {
+    muted: null, paused: null, isFs: null, bombs: null, inGame: null,
+  };
+  function syncUIIcons() {
+    if (uiState.muted !== muted) {
+      uiState.muted = muted;
+      if (iconWaves) iconWaves.style.display = muted ? 'none' : '';
+      if (iconX)     iconX.style.display     = muted ? '' : 'none';
+    }
+    const paused = (state === STATE.PAUSE);
+    if (uiState.paused !== paused) {
+      uiState.paused = paused;
+      if (iconPause) iconPause.style.display = paused ? 'none' : '';
+      if (iconPlay)  iconPlay.style.display  = paused ? '' : 'none';
+    }
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (uiState.isFs !== isFs) {
+      uiState.isFs = isFs;
+      if (iconFsEnter) iconFsEnter.style.display = isFs ? 'none' : '';
+      if (iconFsExit)  iconFsExit.style.display  = isFs ? '' : 'none';
+      if (btnFs) btnFs.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
+    }
+    if (player && uiState.bombs !== player.bombs) {
+      uiState.bombs = player.bombs;
+      if (bombCountEl) bombCountEl.textContent = String(player.bombs);
+      if (btnBomb) {
+        if (player.bombs <= 0) btnBomb.classList.add('disabled');
+        else btnBomb.classList.remove('disabled');
+      }
+    }
+    const inGame = (state === STATE.PLAY || state === STATE.PAUSE);
+    if (uiState.inGame !== inGame) {
+      uiState.inGame = inGame;
+      document.body.classList.toggle('in-game', inGame);
+    }
+  }
+
+  function render() {
+    syncUIIcons();
+    let ox = 0, oy = 0;
+    if (shake > 0) {
+      ox = (Math.random()-0.5) * shake;
+      oy = (Math.random()-0.5) * shake;
+    }
+    ctx.save();
+    ctx.translate(Math.round(ox), Math.round(oy));
+
+    drawBackground();
+
+    if (state === STATE.TITLE) {
+      drawTitle();
+    } else if (state === STATE.SCORES) {
+      drawScoresScreen();
+    } else if (state === STATE.BESTIARY) {
+      drawBestiary();
+    } else {
+      drawPowerups();
+      drawEnemies();
+      drawPlayer();
+      drawBullets();
+      drawParticles();
+      drawScoreFloaters();
+      drawHUD();
+      drawWarning();
+      drawBanner();
+
+      if (bombFlash > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${bombFlash/40})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+      if (state === STATE.OVER)       drawGameOver();
+      if (state === STATE.PAUSE)      drawPauseOverlay();
+      if (state === STATE.NAME_ENTRY) drawNameEntry();
+    }
+
+    ctx.restore();
+  }
+
+  function loop() {
+    update();
+    render();
+    for (const k in pressed) pressed[k] = false;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+
+<script>
+  // PWA service worker registration.
+  // Skips environments where SW can't run (file://, blob:, embedded webviews
+  // with app-bound-domain restrictions, etc.) so the console stays clean.
+  if ('serviceWorker' in navigator
+      && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch((err) => {
+        // App-bound-domain rejection in iOS WKWebView previews is expected and harmless.
+        if (!String(err).includes('app-bound')) {
+          console.warn('SW registration failed:', err);
+        }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
