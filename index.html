@@ -88,7 +88,7 @@ justify-content: center;
 .ui-btn.disabled { opacity: .35; pointer-events: none; }
 
 #btn-bomb {
-right: max(20px, env(safe-area-inset-right, 20px));
+left: max(20px, env(safe-area-inset-left, 20px));
 bottom: max(30px, env(safe-area-inset-bottom, 30px));
 width: 78px; height: 78px;
 border-color: #ff8040;
@@ -1508,33 +1508,29 @@ text-shadow: 0 1px 0 #000;
         return;
       }
       case 'ONI': {
-        // Heavy aimed projectiles, twin volleys, dense scatter
+        // Heavy aimed projectiles, twin volleys, scatter
         if (e.phase === 0) {
-          // twin big aimed bullets + flanking shots
-          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.6, vy:dy/d*1.6, big:true});
-          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.6, vy:dy/d*1.6, big:true});
-          // 2 spread shots either side
-          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang+0.35)*1.5, vy:Math.sin(ang+0.35)*1.5, big:false});
-          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang-0.35)*1.5, vy:Math.sin(ang-0.35)*1.5, big:false});
-          e.shootCD = 60;
+          // twin big aimed bullets only (drop flanking shots)
+          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.5, vy:dy/d*1.5, big:true});
+          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.5, vy:dy/d*1.5, big:true});
+          e.shootCD = 65;
         } else if (e.phase === 1) {
-          // 5-way spread + a fast aimed big bullet
-          for (let i=-2; i<=2; i++) {
-            const a = ang + i * 0.22;
+          // 3-way spread + aimed big bullet
+          for (let i=-1; i<=1; i++) {
+            const a = ang + i * 0.25;
             ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.5, vy:Math.sin(a)*1.5, big:i===0});
           }
-          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.1, vy:dy/d*2.1, big:true});
-          e.shootCD = 50;
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.0, vy:dy/d*2.0, big:true});
+          e.shootCD = 55;
         } else {
-          // chaos: scatter + aimed barrage
-          for (let i=0; i<7; i++) {
-            const a = ang + (Math.random()-0.5) * 1.3;
-            const sp = 1.4 + Math.random()*0.7;
+          // scatter + aimed barrage (toned down from 7 to 5)
+          for (let i=0; i<5; i++) {
+            const a = ang + (Math.random()-0.5) * 1.2;
+            const sp = 1.4 + Math.random()*0.6;
             ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, big:false});
           }
-          // plus a center big shot
-          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.0, vy:dy/d*2.0, big:true});
-          e.shootCD = 38;
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*1.9, vy:dy/d*1.9, big:true});
+          e.shootCD = 45;
         }
         return;
       }
