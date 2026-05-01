@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -64,100 +63,99 @@
     background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
   }
 
-/* Floating UI buttons (touch + mouse both supported) */
-.ui-btn {
-position: fixed;
-z-index: 10;
-background: rgba(20,20,30,.55);
-border: 2px solid rgba(255,216,74,.5);
-color: #ffd84a;
-font-family: ‘Press Start 2P’, monospace;
-font-size: 9px;
-border-radius: 12px;
-backdrop-filter: blur(4px);
--webkit-backdrop-filter: blur(4px);
-cursor: pointer;
-transition: transform .08s, background .15s;
-user-select: none;
--webkit-user-select: none;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
-.ui-btn.disabled { opacity: .35; pointer-events: none; }
+  /* Floating UI buttons (touch + mouse both supported) */
+  .ui-btn {
+    position: fixed;
+    z-index: 10;
+    background: rgba(20,20,30,.55);
+    border: 2px solid rgba(255,216,74,.5);
+    color: #ffd84a;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    cursor: pointer;
+    transition: transform .08s, background .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ui-btn:active { transform: scale(.92); background: rgba(255,216,74,.25); }
+  .ui-btn.disabled { opacity: .35; pointer-events: none; }
 
-#btn-bomb {
-right: max(20px, env(safe-area-inset-right, 20px));
-bottom: max(30px, env(safe-area-inset-bottom, 30px));
-width: 78px; height: 78px;
-border-color: #ff8040;
-color: #ff8040;
-font-size: 11px;
-box-shadow: 0 0 20px rgba(255,128,64,.3);
-}
-#btn-bomb .count {
-position: absolute;
-bottom: 4px;
-right: 8px;
-font-size: 8px;
-color: #fff080;
-}
-#btn-pause {
-top: max(14px, env(safe-area-inset-top, 14px));
-right: max(14px, env(safe-area-inset-right, 14px));
-width: 42px; height: 42px;
-}
-#btn-fs {
-top: max(14px, env(safe-area-inset-top, 14px));
-left: max(14px, env(safe-area-inset-left, 14px));
-width: 42px; height: 42px;
-}
-/* Mute sits to the LEFT of pause in the top-right corner */
-#btn-mute {
-top: max(14px, env(safe-area-inset-top, 14px));
-right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
-width: 42px; height: 42px;
-}
-/* Force consistent flat SVG icons - no emoji rendering on any platform */
-.ui-btn svg {
-width: 22px; height: 22px;
-display: block;
-pointer-events: none;
-}
+  #btn-bomb {
+    right: max(20px, env(safe-area-inset-right, 20px));
+    bottom: max(30px, env(safe-area-inset-bottom, 30px));
+    width: 78px; height: 78px;
+    border-color: #ff8040;
+    color: #ff8040;
+    font-size: 11px;
+    box-shadow: 0 0 20px rgba(255,128,64,.3);
+  }
+  #btn-bomb .count {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 8px;
+    color: #fff080;
+  }
+  #btn-pause {
+    top: max(14px, env(safe-area-inset-top, 14px));
+    right: max(14px, env(safe-area-inset-right, 14px));
+    width: 42px; height: 42px;
+  }
+  #btn-fs {
+    top: max(14px, env(safe-area-inset-top, 14px));
+    left: max(14px, env(safe-area-inset-left, 14px));
+    width: 42px; height: 42px;
+  }
+  /* Mute sits to the LEFT of pause in the top-right corner */
+  #btn-mute {
+    top: max(14px, env(safe-area-inset-top, 14px));
+    right: calc(max(14px, env(safe-area-inset-right, 14px)) + 50px);
+    width: 42px; height: 42px;
+  }
+  /* Force consistent flat SVG icons - no emoji rendering on any platform */
+  .ui-btn svg {
+    width: 22px; height: 22px;
+    display: block;
+    pointer-events: none;
+  }
 
-/* Hide touch UI by default; shown when touch detected or on small screens */
-body:not(.touch) #btn-bomb { display: none; }
-body.touch #help-desktop { display: none; }
-body:not(.touch) #help-mobile { display: none; }
-/* Fullscreen button only useful on desktop */
-body.touch #btn-fs { display: none; }
-/* Quit button: only visible during gameplay (not title) */
-#btn-quit {
-top: max(14px, env(safe-area-inset-top, 14px));
-left: max(14px, env(safe-area-inset-left, 14px));
-width: 42px; height: 42px;
-display: none;
-}
-body.in-game #btn-quit { display: flex; }
+  /* Hide touch UI by default; shown when touch detected or on small screens */
+  body:not(.touch) #btn-bomb { display: none; }
+  body.touch #help-desktop { display: none; }
+  body:not(.touch) #help-mobile { display: none; }
+  /* Fullscreen button only useful on desktop */
+  body.touch #btn-fs { display: none; }
+  /* Quit button: only visible during gameplay (not title) */
+  #btn-quit {
+    top: max(14px, env(safe-area-inset-top, 14px));
+    left: max(14px, env(safe-area-inset-left, 14px));
+    width: 42px; height: 42px;
+    display: none;
+  }
+  body.in-game #btn-quit { display: flex; }
 
-#help-desktop, #help-mobile {
-position: fixed;
-bottom: 12px;
-left: 50%;
-transform: translateX(-50%);
-color: #6080a0;
-font-size: 8px;
-letter-spacing: 1px;
-pointer-events: none;
-z-index: 4;
-text-align: center;
-line-height: 1.6;
-text-shadow: 0 1px 0 #000;
-}
-#help-desktop b { color: #ffd84a; }
+  #help-desktop, #help-mobile {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #6080a0;
+    font-size: 8px;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 4;
+    text-align: center;
+    line-height: 1.6;
+    text-shadow: 0 1px 0 #000;
+  }
+  #help-desktop b { color: #ffd84a; }
 </style>
-
 </head>
 <body>
   <div id="stage">
@@ -755,6 +753,7 @@ text-shadow: 0 1px 0 #000;
       name,
       score: (HS_MAX - i) * 5000,
       stage: Math.max(1, Math.ceil((HS_MAX - i) / 2)),
+      loop: 0,
       date: 0,
     }));
   }
@@ -808,7 +807,39 @@ text-shadow: 0 1px 0 #000;
   let bossesKilledThisStage=0; // tracks multi-boss stages in endless loops
   let bossesNeededThisStage=1; // total bosses spawned this stage
   let totalBossKills=0;        // running total across the run; every 4 → life drop
+
+  // Format stage label like "1-3", "2-1", or "FINAL".
+  function stageLabel() {
+    if (loopCount >= 2) return 'FINAL';
+    return (loopCount + 1) + '-' + stage;
+  }
+
+  // Format a saved high-score entry's stage label.
+  function entryStageLabel(e) {
+    const lp = e.loop || 0;
+    const st = e.stage || 1;
+    if (lp >= 2) return 'FINAL';
+    return (lp + 1) + '-' + st;
+  }
   let bombFlash=0, shake=0, highScore=0;
+
+  // Track scheduled game timeouts so we can cancel them on reset / death.
+  // (Without this, a stale setTimeout from a previous run could fire during
+  // a new game and e.g. spawn a boss on stage 1-1 with no waves.)
+  const _gameTimeouts = new Set();
+  function scheduleGame(fn, ms) {
+    let id;
+    id = setTimeout(() => {
+      _gameTimeouts.delete(id);
+      fn();
+    }, ms);
+    _gameTimeouts.add(id);
+    return id;
+  }
+  function clearGameTimeouts() {
+    for (const id of _gameTimeouts) clearTimeout(id);
+    _gameTimeouts.clear();
+  }
 
   // Name entry & scores screen state
   const nameEntry = {
@@ -818,6 +849,7 @@ text-shadow: 0 1px 0 #000;
     rank: -1,
     score: 0,
     stage: 1,
+    loop: 0,
     blink: 0,
   };
   let combo=0, comboTimer=0;
@@ -834,6 +866,8 @@ text-shadow: 0 1px 0 #000;
   });
 
   function reset() {
+    clearGameTimeouts();   // cancel any pending boss spawns / stage transitions
+                           // from a previous game so they can't leak into 1-1.
     player.x = W/2; player.y = H-40;
     player.cooldown=0; player.power=1; player.lives=3; player.bombs=3;
     player.score=0; player.invuln=0; player.dead=false; player.deathTimer=0;
@@ -843,7 +877,7 @@ text-shadow: 0 1px 0 #000;
     loopCount=0; bossesKilledThisStage=0; totalBossKills=0;
     combo=0; comboTimer=0;
     cleared = false;
-    showBanner('STAGE 1', 'TAKE OFF');
+    showBanner('STAGE 1-1', 'TAKE OFF');
     updateBombUI();
   }
   function showBanner(t, s='') { bannerText=t; bannerSub=s; bannerTimer=150; sfx.stage(); }
@@ -954,7 +988,7 @@ text-shadow: 0 1px 0 #000;
     bossWarning = 120;
     sfx.warn();
 
-    setTimeout(() => {
+    scheduleGame(() => {
       if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
 
       let bossList; // array of {def, hpMul, scoreMul}
@@ -1023,6 +1057,7 @@ text-shadow: 0 1px 0 #000;
           name: finalName,
           score: nameEntry.score,
           stage: nameEntry.stage,
+          loop: nameEntry.loop,
           date: Date.now(),
         }, highScores);
         saveScores(highScores);
@@ -1227,12 +1262,13 @@ text-shadow: 0 1px 0 #000;
           titleBlink = 0;
           setBossBGM(false);
           stopBGM();
+          clearGameTimeouts();   // cancel pending boss spawns / transitions
           // If score makes top 10 -> name entry, else regular game over
           const r = rankOf(player.score, highScores);
           if (r >= 0) {
             nameEntry.rank = r;
             nameEntry.score = player.score;
-            nameEntry.stage = stage;
+            nameEntry.stage = stage; nameEntry.loop = loopCount;
             nameEntry.name = Array(NAME_LEN).fill(' ');
             nameEntry.pos = 0;
             nameEntry.kb = 0;
@@ -1438,24 +1474,33 @@ text-shadow: 0 1px 0 #000;
         return;
       }
       case 'ONI': {
-        // Slow heavy aimed projectiles + creeping clusters
+        // Heavy aimed projectiles, twin volleys, dense scatter
         if (e.phase === 0) {
-          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*1.4, vy:dy/d*1.4, big:true});
-          e.shootCD = 70;
+          // twin big aimed bullets + flanking shots
+          ebullets.push({x:e.x-4, y:e.y+10, vx:dx/d*1.8, vy:dy/d*1.8, big:true});
+          ebullets.push({x:e.x+4, y:e.y+10, vx:dx/d*1.8, vy:dy/d*1.8, big:true});
+          // 2 spread shots either side
+          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang+0.35)*1.7, vy:Math.sin(ang+0.35)*1.7, big:false});
+          ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(ang-0.35)*1.7, vy:Math.sin(ang-0.35)*1.7, big:false});
+          e.shootCD = 45;
         } else if (e.phase === 1) {
-          // 5-way slow spread
-          for (let i=-2; i<=2; i++) {
-            const a = ang + i * 0.22;
-            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.2, vy:Math.sin(a)*1.2, big:i===0});
+          // 7-way wide spread + a fast aimed big bullet
+          for (let i=-3; i<=3; i++) {
+            const a = ang + i * 0.20;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.7, vy:Math.sin(a)*1.7, big:i===0});
           }
-          e.shootCD = 55;
-        } else {
-          // chaos: random scatter + aimed
-          for (let i=0; i<6; i++) {
-            const a = ang + (Math.random()-0.5) * 1.2;
-            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*1.5, vy:Math.sin(a)*1.5, big:false});
-          }
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.4, vy:dy/d*2.4, big:true});
           e.shootCD = 40;
+        } else {
+          // chaos: scatter + aimed barrage
+          for (let i=0; i<10; i++) {
+            const a = ang + (Math.random()-0.5) * 1.4;
+            const sp = 1.6 + Math.random()*0.8;
+            ebullets.push({x:e.x, y:e.y+10, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, big:false});
+          }
+          // plus a center big shot
+          ebullets.push({x:e.x, y:e.y+10, vx:dx/d*2.2, vy:dy/d*2.2, big:true});
+          e.shootCD = 28;
         }
         return;
       }
@@ -1553,14 +1598,16 @@ text-shadow: 0 1px 0 #000;
     for (let i=0;i<30;i++) particles.push(makePart(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#ffffff', 40));
     player.score += e.score;
     scoreFloaters.push({x:e.x, y:e.y, text:'+'+e.score, life:80, color:'#ffd84a'});
-    for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
     if (e.bossType) { defeatedBosses[e.bossType] = true; saveDefeated(); }
 
     bossesKilledThisStage++;
     totalBossKills++;
-    // Every 4 boss kills, drop an extra life (heart) at the boss's position.
-    if (totalBossKills % 4 === 0) {
-      powerups.push({x: e.x, y: e.y - 4, t: 0, type: 'L'});
+    // Every 3 boss kills, drop an extra life heart on its OWN — no P/B
+    // powerups stacking on top of it. Otherwise drop the usual P/B/P trio.
+    if (totalBossKills % 3 === 0) {
+      powerups.push({x: e.x, y: e.y, t: 0, type: 'L'});
+    } else {
+      for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
     }
 
     // The cached bossCount is stale here (we just set e.dead inside the same
@@ -1573,7 +1620,7 @@ text-shadow: 0 1px 0 #000;
     setBossBGM(false);
     bossLock = true;  // hold the wave gate closed during transition
 
-    setTimeout(() => {
+    scheduleGame(() => {
       if (state !== STATE.PLAY && state !== STATE.PAUSE) { bossLock = false; return; }
 
       const isLastStage = (stage >= FINAL_STAGE);
@@ -1589,7 +1636,7 @@ text-shadow: 0 1px 0 #000;
         showBanner('CONGRATULATIONS', 'GAME CLEAR !!');
 
         // After the celebration banner, go to high-score / over flow.
-        setTimeout(() => {
+        scheduleGame(() => {
           if (state !== STATE.PLAY && state !== STATE.PAUSE) return;
           stopBGM();
           highScore = Math.max(highScore, player.score);
@@ -1597,7 +1644,7 @@ text-shadow: 0 1px 0 #000;
           if (r >= 0) {
             nameEntry.rank = r;
             nameEntry.score = player.score;
-            nameEntry.stage = stage;
+            nameEntry.stage = stage; nameEntry.loop = loopCount;
             nameEntry.name = Array(NAME_LEN).fill(' ');
             nameEntry.pos = 0;
             nameEntry.kb = 0;
@@ -1625,7 +1672,7 @@ text-shadow: 0 1px 0 #000;
           showBanner('FINAL STAGE !!', '3 OVERLORDS APPROACH');
           waveTimer = 9999; // disable wave timer; we'll spawn boss directly
           // Spawn the final 3-boss assault after the banner
-          setTimeout(() => {
+          scheduleGame(() => {
             if (state === STATE.PLAY || state === STATE.PAUSE) spawnBoss();
           }, 2200);
         } else {
@@ -1633,10 +1680,16 @@ text-shadow: 0 1px 0 #000;
           stage = 1; stageWaves = 0;
           showBanner('ALL CLEAR !!', 'LOOP 2  x2 BOSSES');
           waveTimer = 180;
+          // Follow-up banner so the player sees the new stage label "2-1"
+          scheduleGame(() => {
+            if (state === STATE.PLAY || state === STATE.PAUSE) {
+              showBanner('STAGE ' + stageLabel(), 'GET READY');
+            }
+          }, 1700);
         }
       } else {
         stage++; stageWaves = 0;
-        showBanner('STAGE ' + stage, 'GET READY');
+        showBanner('STAGE ' + stageLabel(), 'GET READY');
         waveTimer = 90;
       }
       bossLock = false;
@@ -1765,13 +1818,11 @@ text-shadow: 0 1px 0 #000;
     ctx.fillRect(0, 0, W, 12);
     drawText('SCORE', 4, 3, '#80c0ff', 6);
     drawText(String(player.score).padStart(7, '0'), 36, 3, '#fff080', 6);
-    drawText('ST', W/2 - 14, 3, '#80c0ff', 6);
-    if (loopCount >= 2) {
-      drawText('FN', W/2 + 2, 3, '#ff4060', 6);
-    } else if (loopCount === 1) {
-      drawText(String(stage).padStart(2,'0') + '*', W/2 + 2, 3, '#ffd84a', 6);
-    } else {
-      drawText(String(stage).padStart(2,'0'), W/2 + 2, 3, '#ffd84a', 6);
+    drawText('ST', W/2 - 18, 3, '#80c0ff', 6);
+    {
+      const lbl = stageLabel();
+      const color = (loopCount >= 2) ? '#ff4060' : (loopCount === 1 ? '#ff80a0' : '#ffd84a');
+      drawText(lbl, W/2 - 2, 3, color, 6);
     }
     drawText('HI', W-78, 3, '#80c0ff', 6);
     drawText(String(Math.max(highScore, player.score)).padStart(7, '0'), W-66, 3, '#ffd84a', 6);
@@ -1890,7 +1941,7 @@ text-shadow: 0 1px 0 #000;
 
   function drawScoresScreen() {
     drawText('TOP 10', W/2, 14, '#ffd84a', 14, 'center');
-    drawText('  RANK  NAME       SCORE   ST', W/2, 36, '#80c0ff', 6, 'center');
+    drawText('  RANK  NAME       SCORE   STAGE', W/2, 36, '#80c0ff', 6, 'center');
     ctx.fillStyle = '#80c0ff';
     ctx.fillRect(20, 44, W - 40, 1);
     const startY = 50;
@@ -1903,10 +1954,10 @@ text-shadow: 0 1px 0 #000;
       if (e) {
         const name = (e.name || '').padEnd(NAME_LEN, ' ').slice(0, NAME_LEN);
         const score = String(e.score).padStart(7, '0');
-        const stg = String(e.stage || 1).padStart(2, ' ');
+        const stg = entryStageLabel(e).padStart(5, ' ');
         drawText(`${rank}  ${name}  ${score}  ${stg}`, W/2, y, color, 6, 'center');
       } else {
-        drawText(`${rank}  ------  -------  --`, W/2, y, '#404858', 6, 'center');
+        drawText(`${rank}  ------  -------  -----`, W/2, y, '#404858', 6, 'center');
       }
     }
     if (Math.floor(titleBlink/30) % 2) {
@@ -1919,7 +1970,7 @@ text-shadow: 0 1px 0 #000;
     ctx.fillRect(0, 0, W, H);
 
     drawText('NEW HIGH SCORE !!', W/2, 6, '#ffd84a', 8, 'center');
-    drawText('RANK ' + (nameEntry.rank + 1) + '   STAGE ' + nameEntry.stage, W/2, 18, '#80c0ff', 6, 'center');
+    drawText('RANK ' + (nameEntry.rank + 1) + '   STAGE ' + entryStageLabel({stage: nameEntry.stage, loop: nameEntry.loop}), W/2, 18, '#80c0ff', 6, 'center');
     drawText(String(nameEntry.score).padStart(7, '0'), W/2, 28, '#fff080', 8, 'center');
 
     // ---- Name display row ----
@@ -2149,7 +2200,6 @@ text-shadow: 0 1px 0 #000;
   loop();
 })();
 </script>
-
 <script>
   // PWA service worker registration.
   // Skips environments where SW can't run (file://, blob:, embedded webviews
@@ -2166,6 +2216,5 @@ text-shadow: 0 1px 0 #000;
     });
   }
 </script>
-
 </body>
 </html>

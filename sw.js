@@ -2,7 +2,7 @@
 // Cache-first for app shell, stale-while-revalidate for everything else
 // (so Google Fonts get cached on first online load and work offline after).
 
-const VERSION = 'sky-striker-v21';
+const VERSION = 'sky-striker-v24';
 const CORE_CACHE = `${VERSION}-core`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
