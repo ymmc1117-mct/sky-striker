@@ -1423,9 +1423,9 @@ text-shadow: 0 1px 0 #000;
       for (const p of powerups) {
         if (Math.abs(p.x - player.x) < 8 && Math.abs(p.y - player.y) < 8) {
           p.dead = true;
-          if (p.type === 'B') { player.bombs = Math.min(9, player.bombs + 1); updateBombUI(); }
+          if (p.type === 'B') { player.bombs = player.bombs + 1; updateBombUI(); }
           else if (p.type === 'L') {
-            player.lives = Math.min(9, player.lives + 1);
+            player.lives = player.lives + 1;
             scoreFloaters.push({x:p.x, y:p.y-6, text:'1UP', life:60, color:'#ff80a0'});
           }
           else { if (player.power < 3) player.power++; else player.score += 500; }
@@ -1563,39 +1563,28 @@ text-shadow: 0 1px 0 #000;
         return;
       }
       case 'LORD': {
-        // Aimed laser shots, expanding rings, multi-volley barrages
+        // Focused aimed attacks rather than fireworks rings
         if (e.phase === 0) {
-          // double aimed big shots in quick succession + 4-way spread
+          // single big aimed shot + 2 flanking shots
           ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
           ebullets.push({x:e.x-6, y:e.y+4, vx:dx/d*2.4 + 0.8, vy:dy/d*2.4, big:false});
           ebullets.push({x:e.x+6, y:e.y+4, vx:dx/d*2.4 - 0.8, vy:dy/d*2.4, big:false});
-          // 2 wider flanking shots
-          ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(ang+0.45)*2.2, vy:Math.sin(ang+0.45)*2.2, big:false});
-          ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(ang-0.45)*2.2, vy:Math.sin(ang-0.45)*2.2, big:false});
-          e.shootCD = 38;
+          e.shootCD = 55;
         } else if (e.phase === 1) {
-          // expanding ring + aimed big shot through center
-          for (let i=0; i<14; i++) {
-            const a = (i / 14) * Math.PI * 2;
-            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.8, vy:Math.sin(a)*1.8, big:false});
+          // 5-way aimed spread (no full ring)
+          for (let i=-2; i<=2; i++) {
+            const a = ang + i * 0.22;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.2, vy:Math.sin(a)*2.2, big:i===0});
           }
-          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*2.8, vy:dy/d*2.8, big:true});
-          e.shootCD = 42;
+          e.shootCD = 60;
         } else {
-          // double-ring + aimed laser triplet — final desperation
-          for (let i=0; i<12; i++) {
-            const a = (i / 12) * Math.PI * 2 + e.t*0.02;
-            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*2.0, vy:Math.sin(a)*2.0, big:false});
+          // 7-way aimed spread + single fast aimed laser
+          for (let i=-3; i<=3; i++) {
+            const a = ang + i * 0.20;
+            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*2.2, vy:Math.sin(a)*2.2, big:i===0});
           }
-          for (let i=0; i<8; i++) {
-            const a = (i / 8) * Math.PI * 2 - e.t*0.015;
-            ebullets.push({x:e.x, y:e.y, vx:Math.cos(a)*1.3, vy:Math.sin(a)*1.3, big:false});
-          }
-          for (let i=-1; i<=1; i++) {
-            const a = ang + i * 0.08;
-            ebullets.push({x:e.x, y:e.y+4, vx:Math.cos(a)*3.0, vy:Math.sin(a)*3.0, big:i===0});
-          }
-          e.shootCD = 24;
+          ebullets.push({x:e.x, y:e.y+4, vx:dx/d*3.0, vy:dy/d*3.0, big:true});
+          e.shootCD = 45;
         }
         return;
       }
@@ -1639,11 +1628,13 @@ text-shadow: 0 1px 0 #000;
 
     bossesKilledThisStage++;
     totalBossKills++;
-    // Always drop the P/B/P trio. Every 3 boss kills, ALSO drop a heart
-    // floating just above the trio so the icons don't overlap.
+    // Always drop the P/B/P trio.
     for (let i=0;i<3;i++) powerups.push({x:e.x + (i-1)*20, y:e.y, t:0, type: i===1 ? 'B' : 'P'});
+    // Every 3 boss kills, drop 3 hearts side by side above the trio.
     if (totalBossKills % 3 === 0) {
-      powerups.push({x: e.x, y: e.y - 16, t: 0, type: 'L'});
+      for (let i=0;i<3;i++) {
+        powerups.push({x: e.x + (i-1)*16, y: e.y - 16, t: 0, type: 'L'});
+      }
     }
 
     // The cached bossCount is stale here (we just set e.dead inside the same
