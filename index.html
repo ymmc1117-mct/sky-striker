@@ -1057,6 +1057,14 @@ text-shadow: 0 1px 0 #000;
     if (state === STATE.NAME_ENTRY) {
       nameEntry.blink++;
       for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
+      // Continue fireworks if game was cleared
+      if (gameComplete) {
+        for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.04; }
+        particles = particles.filter(p => p.life > 0);
+        if (Math.random() < 0.07) {
+          spawnFireworkBurst(20 + Math.random() * (W - 40), 30 + Math.random() * (H - 80));
+        }
+      }
 
       const commit = () => {
         const finalName = nameEntry.name.join('').replace(/\s+$/,'') || 'PILOT';
@@ -1161,6 +1169,10 @@ text-shadow: 0 1px 0 #000;
       for (const s of stars) { s.y += s.s * 0.5; if (s.y > H) { s.y = 0; s.x = Math.random()*W; } }
       for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.05; }
       particles = particles.filter(p => p.life > 0);
+      // Continue fireworks if game was cleared
+      if (gameComplete && Math.random() < 0.07) {
+        spawnFireworkBurst(20 + Math.random() * (W - 40), 30 + Math.random() * (H - 80));
+      }
       if (pressed.Space || pressed.KeyZ || pressed.Enter || pressed.Touch) { state = STATE.TITLE; titleBlink = 0; }
       if (pressed.KeyM) muted = !muted;
       return;
@@ -1356,6 +1368,16 @@ text-shadow: 0 1px 0 #000;
 
     for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.04; }
     particles = particles.filter(p => p.life > 0);
+
+    // Fireworks during the game-complete celebration (lasts until name entry)
+    if (gameComplete) {
+      // ~7% chance per frame at 60fps -> ~4 bursts per second
+      if (Math.random() < 0.07) {
+        const fx = 20 + Math.random() * (W - 40);
+        const fy = 30 + Math.random() * (H - 80);
+        spawnFireworkBurst(fx, fy);
+      }
+    }
 
     for (const f of scoreFloaters) { f.y -= 0.5; f.life--; }
     scoreFloaters = scoreFloaters.filter(f => f.life > 0);
@@ -1665,6 +1687,10 @@ text-shadow: 0 1px 0 #000;
         scoreFloaters.push({x:W/2, y:H/2 + 4,  text:'LIVES BONUS +'+livesBonus, life:120, color:'#80ffe0'});
         showBanner('CONGRATULATIONS', 'GAME CLEAR !!');
         bannerTimer = 300; // hold banner for 5s celebration
+        // Initial fireworks volley scattered across the screen.
+        for (let i = 0; i < 8; i++) {
+          spawnFireworkBurst(20 + Math.random() * (W - 40), 30 + Math.random() * (H - 80));
+        }
 
         // After the celebration banner, go to high-score / over flow.
         scheduleGame(() => {
@@ -1738,6 +1764,26 @@ text-shadow: 0 1px 0 #000;
     const a = Math.random() * Math.PI * 2;
     const sp = Math.random() * 1.8 + 0.3;
     return { x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life, max:life, color };
+  }
+
+  // Colorful firework burst for the game-clear celebration. ~15 particles
+  // per burst, full RGB rainbow, with longer life so trails linger.
+  const FIREWORK_COLORS = ['#ffd84a','#ff8040','#80c0ff','#80ffe0','#ff80c0','#ffffff','#ffe020','#ff5070'];
+  function spawnFireworkBurst(x, y) {
+    const n = 15;
+    const c = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = Math.random() * 2.4 + 0.6;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 60 + Math.random() * 40,
+        max: 100,
+        color: c,
+      });
+    }
   }
 
   function fillRect(x,y,w,h){ ctx.fillRect(Math.floor(x),Math.floor(y),w,h); }
